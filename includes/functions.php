@@ -85,7 +85,7 @@ function salvaCliente(array $data): int {
 function getPrenotazioni(string $filtroStato = ''): array {
     $db = getDB();
     $sql = 'SELECT p.*, c.numero AS camera_numero, c.tipo AS camera_tipo,
-            cl.nome AS cliente_nome, cl.cognome AS cliente_cognome
+            cl.nome AS cliente_nome, cl.cognome AS cliente_cognome, cl.email AS cliente_email, cl.telefono AS cliente_telefono
             FROM prenotazioni p
             JOIN camere c ON p.camera_id = c.id
             JOIN clienti cl ON p.cliente_id = cl.id';
@@ -103,7 +103,7 @@ function getPrenotazioni(string $filtroStato = ''): array {
 function getPrenotazione(int $id): ?array {
     $db = getDB();
     $stmt = $db->prepare('SELECT p.*, c.numero AS camera_numero, c.tipo AS camera_tipo, c.prezzo_notte,
-            cl.nome AS cliente_nome, cl.cognome AS cliente_cognome
+            cl.nome AS cliente_nome, cl.cognome AS cliente_cognome, cl.email AS cliente_email, cl.telefono AS cliente_telefono
             FROM prenotazioni p
             JOIN camere c ON p.camera_id = c.id
             JOIN clienti cl ON p.cliente_id = cl.id
@@ -122,16 +122,16 @@ function salvaPrenotazione(array $data): bool {
     $prezzoTotale = $camera ? $camera['prezzo_notte'] * $notti : 0;
 
     if (!empty($data['id'])) {
-        $stmt = $db->prepare('UPDATE prenotazioni SET camera_id=?, cliente_id=?, data_checkin=?, data_checkout=?, stato=?, num_ospiti=?, prezzo_totale=?, note=? WHERE id=?');
+        $stmt = $db->prepare('UPDATE prenotazioni SET camera_id=?, cliente_id=?, data_checkin=?, data_checkout=?, stato=?, pagamento=?, num_ospiti=?, prezzo_totale=?, note=? WHERE id=?');
         return $stmt->execute([
             $data['camera_id'], $data['cliente_id'], $data['data_checkin'], $data['data_checkout'],
-            $data['stato'], $data['num_ospiti'], $prezzoTotale, $data['note'], $data['id']
+            $data['stato'], $data['pagamento'], $data['num_ospiti'], $prezzoTotale, $data['note'], $data['id']
         ]);
     } else {
-        $stmt = $db->prepare('INSERT INTO prenotazioni (camera_id, cliente_id, data_checkin, data_checkout, stato, num_ospiti, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $db->prepare('INSERT INTO prenotazioni (camera_id, cliente_id, data_checkin, data_checkout, stato, pagamento, num_ospiti, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
         return $stmt->execute([
             $data['camera_id'], $data['cliente_id'], $data['data_checkin'], $data['data_checkout'],
-            $data['stato'] ?? 'confermata', $data['num_ospiti'], $prezzoTotale, $data['note']
+            $data['stato'] ?? 'confermata', $data['pagamento'] ?? 'cliente', $data['num_ospiti'], $prezzoTotale, $data['note']
         ]);
     }
 }
@@ -187,7 +187,7 @@ function getPrenotazioniCalendario(string $meseAnno): array {
     $inizioMese = $meseAnno . '-01';
     $fineMese = date('Y-m-t', strtotime($inizioMese));
 
-    $stmt = $db->prepare("SELECT p.*, c.numero AS camera_numero, cl.nome AS cliente_nome, cl.cognome AS cliente_cognome
+    $stmt = $db->prepare("SELECT p.*, c.numero AS camera_numero, cl.nome AS cliente_nome, cl.cognome AS cliente_cognome, cl.email AS cliente_email, cl.telefono AS cliente_telefono
         FROM prenotazioni p
         JOIN camere c ON p.camera_id = c.id
         JOIN clienti cl ON p.cliente_id = cl.id

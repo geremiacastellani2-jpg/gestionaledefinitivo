@@ -51,7 +51,7 @@ a:hover { text-decoration: underline; }
 
 /* === CONTAINER === */
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 2rem auto;
     padding: 0 1.5rem;
 }
@@ -250,55 +250,133 @@ legend {
 
 .filtri { display: flex; gap: 0.3rem; }
 
-/* === CALENDARIO === */
+/* === CALENDARIO / GRIGLIA CAMERE === */
 .calendario-nav {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .legenda {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+    background: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 .legenda-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
-.legenda-colore { width: 16px; height: 16px; border-radius: 4px; }
+.legenda-colore { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
 .legenda-disponibile { background: #dcfce7; }
 .legenda-confermata { background: #93c5fd; }
 .legenda-checkin { background: #fca5a5; }
 .legenda-manutenzione { background: #fde68a; }
+.legenda-sposi { background: #c4b5fd; }
+.legenda-cliente-paga { background: #93c5fd; }
 
 .calendario-griglia-wrapper { overflow-x: auto; }
 
-.calendario-tabella th.giorno-col,
+.calendario-tabella { font-size: 0.85rem; }
+
+.calendario-tabella th.giorno-col-header,
 .calendario-tabella td.giorno-col {
-    width: 30px;
-    min-width: 30px;
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
     text-align: center;
-    padding: 0.4rem 0.2rem;
-    font-size: 0.8rem;
+    padding: 0.3rem 0.1rem;
+}
+
+.calendario-tabella th.giorno-col-header {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    padding: 0.4rem 0.1rem;
+}
+
+.calendario-tabella th.giorno-col-header .giorno-nome {
+    display: block;
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.calendario-tabella th.giorno-col-header .giorno-num {
+    display: block;
+    font-weight: 700;
 }
 
 .calendario-tabella th.weekend { color: #dc2626; }
+.calendario-tabella th.oggi { background: #dbeafe; }
+
+.calendario-tabella th.camera-col-header {
+    min-width: 130px;
+    text-align: left;
+}
 
 .calendario-tabella .camera-col {
-    min-width: 120px;
+    min-width: 130px;
     white-space: nowrap;
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 1;
+    border-right: 2px solid #e2e8f0;
 }
 .calendario-tabella .camera-col small {
     display: block;
     color: #94a3b8;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
 }
+.calendario-tabella .camera-col .camera-prezzo {
+    color: #16a34a;
+    font-weight: 500;
+}
+
+.calendario-tabella td.giorno-col {
+    transition: opacity 0.15s;
+    position: relative;
+}
+.calendario-tabella td.giorno-col:hover { opacity: 0.75; }
 
 .cella-disponibile { background: #dcfce7; }
 .cella-confermata { background: #93c5fd; }
+.cella-confermata.cella-sposi { background: #c4b5fd; }
 .cella-checkin { background: #fca5a5; }
+.cella-checkin.cella-sposi { background: #f9a8d4; }
 .cella-manutenzione { background: #fde68a; }
+
+.paga-icona {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #6b21a8;
+    line-height: 1;
+}
+
+/* === BADGE PAGAMENTO === */
+.badge-sposi { background: #ede9fe; color: #6b21a8; }
+.badge-cliente { background: #dbeafe; color: #1e40af; }
+
+/* === TOOLTIP CUSTOM === */
+.tooltip-custom {
+    position: absolute;
+    background: #1e293b;
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    max-width: 300px;
+}
 
 /* === FOOTER === */
 .footer {

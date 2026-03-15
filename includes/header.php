@@ -19,9 +19,9 @@ $paginaCorrente = basename($_SERVER['PHP_SELF'], '.php');
     </div>
     <ul class="navbar-menu">
         <li><a href="<?= BASE_URL ?>index.php" class="<?= $paginaCorrente === 'index' ? 'active' : '' ?>">Dashboard</a></li>
-        <li><a href="<?= BASE_URL ?>pages/camere.php" class="<?= $paginaCorrente === 'camere' ? 'active' : '' ?>">Camere</a></li>
+        <li><a href="<?= BASE_URL ?>pages/calendario.php" class="<?= $paginaCorrente === 'calendario' ? 'active' : '' ?>">Griglia Camere</a></li>
         <li><a href="<?= BASE_URL ?>pages/prenotazioni.php" class="<?= $paginaCorrente === 'prenotazioni' ? 'active' : '' ?>">Prenotazioni</a></li>
-        <li><a href="<?= BASE_URL ?>pages/calendario.php" class="<?= $paginaCorrente === 'calendario' ? 'active' : '' ?>">Calendario</a></li>
+        <li><a href="<?= BASE_URL ?>pages/camere.php" class="<?= $paginaCorrente === 'camere' ? 'active' : '' ?>">Anagrafica Camere</a></li>
         <li><a href="<?= BASE_URL ?>pages/clienti.php" class="<?= $paginaCorrente === 'clienti' ? 'active' : '' ?>">Clienti</a></li>
     </ul>
 </nav>

@@ -6,17 +6,32 @@ $azione = $_GET['azione'] ?? 'lista';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $filtroStato = $_GET['stato'] ?? '';
 
+// Parametri pre-compilati dalla griglia calendario
+$preCameraId = $_GET['camera_id'] ?? '';
+$preCheckin = $_GET['checkin'] ?? '';
+
 // Gestione form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $azione_post = $_POST['azione'] ?? '';
 
     if ($azione_post === 'salva') {
+        // Validazione dati cliente obbligatori
+        $clienteNome = trim($_POST['cliente_nome']);
+        $clienteCognome = trim($_POST['cliente_cognome']);
+        $clienteEmail = trim($_POST['cliente_email']);
+        $clienteTelefono = trim($_POST['cliente_telefono']);
+
+        if (!$clienteNome || !$clienteCognome || !$clienteEmail || !$clienteTelefono) {
+            setFlash('error', 'Nome, cognome, email e telefono del cliente sono obbligatori.');
+            redirect('prenotazioni.php?azione=' . ($azione === 'modifica' ? "modifica&id=" . ($_POST['id'] ?? '') : 'nuova'));
+        }
+
         $datiCliente = [
             'id' => $_POST['cliente_id'] ?? '',
-            'nome' => trim($_POST['cliente_nome']),
-            'cognome' => trim($_POST['cliente_cognome']),
-            'email' => trim($_POST['cliente_email']),
-            'telefono' => trim($_POST['cliente_telefono']),
+            'nome' => $clienteNome,
+            'cognome' => $clienteCognome,
+            'email' => $clienteEmail,
+            'telefono' => $clienteTelefono,
             'documento_tipo' => $_POST['documento_tipo'] ?? 'carta_identita',
             'documento_numero' => trim($_POST['documento_numero'] ?? ''),
             'note' => '',
@@ -28,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkout = $_POST['data_checkout'];
         $prenotazioneId = !empty($_POST['id']) ? (int)$_POST['id'] : null;
 
+        // Verifica disponibilita prima di salvare
         if (!cameraDisponibile($cameraId, $checkin, $checkout, $prenotazioneId)) {
-            setFlash('error', 'La camera non è disponibile per le date selezionate.');
+            setFlash('error', 'ATTENZIONE: La camera non e\' disponibile per le date selezionate. Verificare il calendario.');
             redirect('prenotazioni.php?azione=' . ($prenotazioneId ? "modifica&id=$prenotazioneId" : 'nuova'));
         }
 
@@ -40,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'data_checkin' => $checkin,
             'data_checkout' => $checkout,
             'stato' => $_POST['stato'] ?? 'confermata',
+            'pagamento' => $_POST['pagamento'] ?? 'cliente',
             'num_ospiti' => (int)$_POST['num_ospiti'],
             'note' => trim($_POST['note']),
         ];
@@ -79,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if ($azione === 'lista'): ?>
     <div class="toolbar">
         <a href="?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
+        <a href="calendario.php" class="btn btn-info">Griglia Camere</a>
         <div class="filtri">
             <a href="?stato=" class="btn btn-sm <?= !$filtroStato ? 'btn-primary' : 'btn-secondary' ?>">Tutte</a>
             <a href="?stato=confermata" class="btn btn-sm <?= $filtroStato === 'confermata' ? 'btn-primary' : 'btn-secondary' ?>">Confermate</a>
@@ -94,9 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <th>#</th>
                 <th>Camera</th>
                 <th>Cliente</th>
+                <th>Email</th>
+                <th>Telefono</th>
                 <th>Check-in</th>
                 <th>Check-out</th>
-                <th>Ospiti</th>
+                <th>Paga</th>
                 <th>Totale</th>
                 <th>Stato</th>
                 <th>Azioni</th>
@@ -108,9 +128,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <td><?= $p['id'] ?></td>
                 <td><?= e($p['camera_numero']) ?> (<?= e(ucfirst($p['camera_tipo'])) ?>)</td>
                 <td><?= e($p['cliente_cognome'] . ' ' . $p['cliente_nome']) ?></td>
+                <td><?= e($p['cliente_email'] ?? '-') ?></td>
+                <td><?= e($p['cliente_telefono'] ?? '-') ?></td>
                 <td><?= date('d/m/Y', strtotime($p['data_checkin'])) ?></td>
                 <td><?= date('d/m/Y', strtotime($p['data_checkout'])) ?></td>
-                <td><?= $p['num_ospiti'] ?></td>
+                <td><span class="badge badge-<?= $p['pagamento'] ?>"><?= $p['pagamento'] === 'sposi' ? 'Sposi' : 'Cliente' ?></span></td>
                 <td>&euro; <?= number_format($p['prezzo_totale'], 2, ',', '.') ?></td>
                 <td><span class="badge badge-<?= $p['stato'] ?>"><?= e(ucfirst($p['stato'])) ?></span></td>
                 <td class="azioni-cell">
@@ -149,8 +171,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prenotazione = $azione === 'modifica' ? getPrenotazione($id) : null;
     $cliente = $prenotazione ? getCliente($prenotazione['cliente_id']) : null;
     $camereDisponibili = getCamere();
+
+    // Valori pre-compilati (dalla griglia o dalla prenotazione esistente)
+    $valCameraId = $prenotazione['camera_id'] ?? $preCameraId;
+    $valCheckin = $prenotazione['data_checkin'] ?? $preCheckin;
+    $valCheckout = $prenotazione['data_checkout'] ?? '';
 ?>
     <h2><?= $prenotazione ? 'Modifica Prenotazione #' . $prenotazione['id'] : 'Nuova Prenotazione' ?></h2>
+
+    <?php if (!$prenotazione): ?>
+    <div class="alert alert-info">
+        La disponibilita della camera viene verificata automaticamente al salvataggio. Puoi controllare la <a href="calendario.php">griglia camere</a> per una visione d'insieme.
+    </div>
+    <?php endif; ?>
+
     <form method="post" class="form">
         <input type="hidden" name="azione" value="salva">
         <?php if ($prenotazione): ?>
@@ -160,32 +194,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <fieldset>
-            <legend>Dati Cliente</legend>
+            <legend>Dati Cliente (tutti obbligatori)</legend>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="cliente_nome">Nome</label>
+                    <label for="cliente_nome">Nome *</label>
                     <input type="text" id="cliente_nome" name="cliente_nome" value="<?= e($cliente['nome'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="cliente_cognome">Cognome</label>
+                    <label for="cliente_cognome">Cognome *</label>
                     <input type="text" id="cliente_cognome" name="cliente_cognome" value="<?= e($cliente['cognome'] ?? '') ?>" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="cliente_email">Email</label>
-                    <input type="email" id="cliente_email" name="cliente_email" value="<?= e($cliente['email'] ?? '') ?>">
+                    <label for="cliente_email">Email *</label>
+                    <input type="email" id="cliente_email" name="cliente_email" value="<?= e($cliente['email'] ?? '') ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="cliente_telefono">Telefono</label>
-                    <input type="text" id="cliente_telefono" name="cliente_telefono" value="<?= e($cliente['telefono'] ?? '') ?>">
+                    <label for="cliente_telefono">Telefono *</label>
+                    <input type="text" id="cliente_telefono" name="cliente_telefono" value="<?= e($cliente['telefono'] ?? '') ?>" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="documento_tipo">Tipo Documento</label>
                     <select id="documento_tipo" name="documento_tipo">
-                        <?php foreach (['carta_identita' => "Carta d'Identità", 'passaporto' => 'Passaporto', 'patente' => 'Patente'] as $val => $label): ?>
+                        <?php foreach (['carta_identita' => "Carta d'Identita", 'passaporto' => 'Passaporto', 'patente' => 'Patente'] as $val => $label): ?>
                             <option value="<?= $val ?>" <?= ($cliente['documento_tipo'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -200,11 +234,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <fieldset>
             <legend>Dati Prenotazione</legend>
             <div class="form-group">
-                <label for="camera_id">Camera</label>
+                <label for="camera_id">Camera *</label>
                 <select id="camera_id" name="camera_id" required>
                     <option value="">-- Seleziona Camera --</option>
                     <?php foreach ($camereDisponibili as $cam): ?>
-                        <option value="<?= $cam['id'] ?>" <?= ($prenotazione['camera_id'] ?? '') == $cam['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $cam['id'] ?>" <?= $valCameraId == $cam['id'] ? 'selected' : '' ?>>
                             #<?= e($cam['numero']) ?> - <?= ucfirst($cam['tipo']) ?> (Piano <?= $cam['piano'] ?>) - &euro;<?= number_format($cam['prezzo_notte'], 2, ',', '.') ?>/notte
                             <?= $cam['stato'] !== 'disponibile' ? ' [' . strtoupper($cam['stato']) . ']' : '' ?>
                         </option>
@@ -214,18 +248,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="data_checkin">Data Check-in</label>
-                    <input type="date" id="data_checkin" name="data_checkin" value="<?= $prenotazione['data_checkin'] ?? '' ?>" required>
+                    <label for="data_checkin">Data Check-in *</label>
+                    <input type="date" id="data_checkin" name="data_checkin" value="<?= e($valCheckin) ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="data_checkout">Data Check-out</label>
-                    <input type="date" id="data_checkout" name="data_checkout" value="<?= $prenotazione['data_checkout'] ?? '' ?>" required>
+                    <label for="data_checkout">Data Check-out *</label>
+                    <input type="date" id="data_checkout" name="data_checkout" value="<?= e($valCheckout) ?>" required>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="num_ospiti">Numero Ospiti</label>
-                <input type="number" id="num_ospiti" name="num_ospiti" value="<?= $prenotazione['num_ospiti'] ?? 1 ?>" min="1" max="10" required>
+            <div id="disponibilita-feedback"></div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="num_ospiti">Numero Ospiti *</label>
+                    <input type="number" id="num_ospiti" name="num_ospiti" value="<?= $prenotazione['num_ospiti'] ?? 1 ?>" min="1" max="10" required>
+                </div>
+                <div class="form-group">
+                    <label for="pagamento">Chi paga? *</label>
+                    <select id="pagamento" name="pagamento" required>
+                        <option value="cliente" <?= ($prenotazione['pagamento'] ?? 'cliente') === 'cliente' ? 'selected' : '' ?>>Il Cliente</option>
+                        <option value="sposi" <?= ($prenotazione['pagamento'] ?? '') === 'sposi' ? 'selected' : '' ?>>Gli Sposi</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
@@ -236,6 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <button type="submit" class="btn btn-primary">Salva Prenotazione</button>
         <a href="prenotazioni.php" class="btn btn-secondary">Annulla</a>
+        <a href="calendario.php" class="btn btn-info">Torna alla Griglia</a>
     </form>
 <?php endif; ?>
 
