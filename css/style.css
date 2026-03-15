@@ -284,7 +284,7 @@ legend {
 .calendario-tabella {
     font-size: 0.85rem;
     border: 3px solid #000;
-    table-layout: auto;
+    table-layout: fixed;
     width: 100%;
 }
 
@@ -296,7 +296,8 @@ legend {
 .calendario-tabella th.giorno-col-header,
 .calendario-tabella td.giorno-col {
     text-align: center;
-    padding: 0.3rem 0.2rem;
+    padding: 0.4rem 0.2rem;
+    height: 38px;
 }
 
 .calendario-tabella th.giorno-col-header {
@@ -333,12 +334,12 @@ legend {
 .calendario-tabella th.oggi { background: #dbeafe; }
 
 .calendario-tabella th.camera-col-header {
-    min-width: 130px;
+    width: 110px;
     text-align: left;
 }
 
 .calendario-tabella .camera-col {
-    min-width: 130px;
+    width: 110px;
     white-space: nowrap;
     position: sticky;
     left: 0;
