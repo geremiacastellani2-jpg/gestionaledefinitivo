@@ -197,6 +197,18 @@ function getPrenotazioniCalendario(string $meseAnno): array {
     return $stmt->fetchAll();
 }
 
+function getPrenotazioniPeriodo(string $dataInizio, string $dataFine): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT p.*, c.numero AS camera_numero, cl.nome AS cliente_nome, cl.cognome AS cliente_cognome, cl.email AS cliente_email, cl.telefono AS cliente_telefono
+        FROM prenotazioni p
+        JOIN camere c ON p.camera_id = c.id
+        JOIN clienti cl ON p.cliente_id = cl.id
+        WHERE p.data_checkin <= ? AND p.data_checkout >= ? AND p.stato != 'cancellata'
+        ORDER BY c.numero");
+    $stmt->execute([$dataFine, $dataInizio]);
+    return $stmt->fetchAll();
+}
+
 function cameraDisponibile(int $cameraId, string $checkin, string $checkout, ?int $escludiPrenotazioneId = null): bool {
     $db = getDB();
     $sql = "SELECT COUNT(*) FROM prenotazioni

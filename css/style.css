@@ -310,6 +310,18 @@ legend {
     font-weight: 700;
 }
 
+.calendario-tabella th.giorno-col-header .giorno-mese {
+    display: block;
+    font-size: 0.6rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.calendario-tabella th.bordo-settimana,
+.calendario-tabella td.bordo-settimana {
+    border-left: 3px solid #334155;
+}
+
 .calendario-tabella th.weekend { color: #dc2626; }
 .calendario-tabella th.oggi { background: #dbeafe; }
 
