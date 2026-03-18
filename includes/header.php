@@ -23,6 +23,7 @@ $paginaCorrente = basename($_SERVER['PHP_SELF'], '.php');
         <li><a href="<?= BASE_URL ?>pages/prenotazioni.php" class="<?= $paginaCorrente === 'prenotazioni' ? 'active' : '' ?>">Prenotazioni</a></li>
         <li><a href="<?= BASE_URL ?>pages/camere.php" class="<?= $paginaCorrente === 'camere' ? 'active' : '' ?>">Anagrafica Camere</a></li>
         <li><a href="<?= BASE_URL ?>pages/clienti.php" class="<?= $paginaCorrente === 'clienti' ? 'active' : '' ?>">Clienti</a></li>
+        <li><a href="<?= BASE_URL ?>pages/richieste.php" class="<?= $paginaCorrente === 'richieste' ? 'active' : '' ?>">Richieste Sposi</a></li>
     </ul>
 </nav>
 <main class="container">

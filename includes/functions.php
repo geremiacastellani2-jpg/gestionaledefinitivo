@@ -214,6 +214,70 @@ function cameraDisponibile(int $cameraId, string $checkin, string $checkout, ?in
     return $stmt->fetchColumn() == 0;
 }
 
+// --- RICHIESTE SPOSI ---
+
+function getPrezzoPerOspiti(int $numOspiti): float {
+    return match($numOspiti) {
+        1 => 80.00,
+        2 => 110.00,
+        3 => 130.00,
+        4 => 150.00,
+        default => 0.00,
+    };
+}
+
+function salvaRichiestaSposi(array $data): bool {
+    $db = getDB();
+    $camere = json_decode($data['camere'], true);
+    $checkin = new DateTime($data['data_checkin']);
+    $checkout = new DateTime($data['data_checkout']);
+    $notti = $checkin->diff($checkout)->days;
+
+    $prezzoTotale = 0;
+    foreach ($camere as $camera) {
+        $prezzoTotale += getPrezzoPerOspiti((int)$camera['num_ospiti']) * $notti;
+    }
+
+    $stmt = $db->prepare('INSERT INTO richieste_sposi (nome_sposi, email, telefono, data_checkin, data_checkout, camere, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    return $stmt->execute([
+        $data['nome_sposi'], $data['email'], $data['telefono'],
+        $data['data_checkin'], $data['data_checkout'],
+        $data['camere'], $prezzoTotale, $data['note'] ?? ''
+    ]);
+}
+
+function getRichiesteSposi(string $filtroStato = ''): array {
+    $db = getDB();
+    $sql = 'SELECT * FROM richieste_sposi';
+    if ($filtroStato) {
+        $sql .= ' WHERE stato = ?';
+        $stmt = $db->prepare($sql . ' ORDER BY created_at DESC');
+        $stmt->execute([$filtroStato]);
+    } else {
+        $stmt = $db->prepare($sql . ' ORDER BY created_at DESC');
+        $stmt->execute();
+    }
+    return $stmt->fetchAll();
+}
+
+function getRichiestaSposi(int $id): ?array {
+    $db = getDB();
+    $stmt = $db->prepare('SELECT * FROM richieste_sposi WHERE id = ?');
+    $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+}
+
+function cambiaStatoRichiesta(int $id, string $nuovoStato): bool {
+    $db = getDB();
+    $stmt = $db->prepare('UPDATE richieste_sposi SET stato = ? WHERE id = ?');
+    return $stmt->execute([$nuovoStato, $id]);
+}
+
+function contaRichiesteNuove(): int {
+    $db = getDB();
+    return (int)$db->query("SELECT COUNT(*) FROM richieste_sposi WHERE stato = 'nuova'")->fetchColumn();
+}
+
 // --- UTILITA ---
 
 function e(string $str): string {

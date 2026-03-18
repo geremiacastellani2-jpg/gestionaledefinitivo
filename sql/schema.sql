@@ -46,3 +46,20 @@ CREATE TABLE IF NOT EXISTS prenotazioni (
     INDEX idx_date (data_checkin, data_checkout),
     INDEX idx_stato (stato)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS richieste_sposi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome_sposi VARCHAR(200) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    data_checkin DATE NOT NULL,
+    data_checkout DATE NOT NULL,
+    camere JSON NOT NULL COMMENT 'Array di oggetti {num_ospiti: 1-4}',
+    prezzo_totale DECIMAL(10,2),
+    note TEXT,
+    stato ENUM('nuova', 'gestita', 'confermata', 'annullata') NOT NULL DEFAULT 'nuova',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_stato (stato),
+    INDEX idx_date (data_checkin, data_checkout)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
