@@ -9,7 +9,7 @@ define('DB_CHARSET', 'utf8mb4');
 // Configurazione Applicazione
 define('APP_NAME', 'Gestionale Hotel');
 define('APP_VERSION', '1.0.0');
-define('BASE_URL', '/gestionale/app/');
+define('BASE_URL', '/');
 
 // Timezone
 date_default_timezone_set('Europe/Rome');

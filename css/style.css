@@ -281,23 +281,15 @@ legend {
 
 .calendario-griglia-wrapper { overflow-x: auto; }
 
-.calendario-tabella {
-    font-size: 0.85rem;
-    border: 3px solid #000;
-    table-layout: fixed;
-    width: 100%;
-}
-
-.calendario-tabella th,
-.calendario-tabella td {
-    border: 2px solid #000;
-}
+.calendario-tabella { font-size: 0.85rem; }
 
 .calendario-tabella th.giorno-col-header,
 .calendario-tabella td.giorno-col {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
     text-align: center;
-    padding: 0.4rem 0.2rem;
-    height: 38px;
+    padding: 0.3rem 0.1rem;
 }
 
 .calendario-tabella th.giorno-col-header {
@@ -318,28 +310,16 @@ legend {
     font-weight: 700;
 }
 
-.calendario-tabella th.giorno-col-header .giorno-mese {
-    display: block;
-    font-size: 0.6rem;
-    color: #94a3b8;
-    font-weight: 400;
-}
-
-.calendario-tabella th.bordo-settimana,
-.calendario-tabella td.bordo-settimana {
-    border-left: 3px solid #334155;
-}
-
 .calendario-tabella th.weekend { color: #dc2626; }
 .calendario-tabella th.oggi { background: #dbeafe; }
 
 .calendario-tabella th.camera-col-header {
-    width: 110px;
+    min-width: 130px;
     text-align: left;
 }
 
 .calendario-tabella .camera-col {
-    width: 110px;
+    min-width: 130px;
     white-space: nowrap;
     position: sticky;
     left: 0;
