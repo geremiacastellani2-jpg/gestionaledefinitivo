@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$clienteNome || !$clienteCognome || !$clienteEmail || !$clienteTelefono) {
             setFlash('error', 'Nome, cognome, email e telefono del cliente sono obbligatori.');
-            redirect('prenotazioni.php?azione=' . ($azione === 'modifica' ? "modifica&id=" . ($_POST['id'] ?? '') : 'nuova'));
+            redirect(BASE_URL . 'pages/prenotazioni.php?azione=' . ($azione === 'modifica' ? "modifica&id=" . ($_POST['id'] ?? '') : 'nuova'));
         }
 
         $datiCliente = [
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Verifica disponibilita prima di salvare
         if (!cameraDisponibile($cameraId, $checkin, $checkout, $prenotazioneId)) {
             setFlash('error', 'ATTENZIONE: La camera non e\' disponibile per le date selezionate. Verificare il calendario.');
-            redirect('prenotazioni.php?azione=' . ($prenotazioneId ? "modifica&id=$prenotazioneId" : 'nuova'));
+            redirect(BASE_URL . 'pages/prenotazioni.php?azione=' . ($prenotazioneId ? "modifica&id=$prenotazioneId" : 'nuova'));
         }
 
         $datiPrenotazione = [
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             setFlash('error', 'Errore nel salvare la prenotazione.');
         }
-        redirect('prenotazioni.php');
+        redirect(BASE_URL . 'pages/prenotazioni.php');
     }
 
     if ($azione_post === 'cambia_stato') {
@@ -80,13 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             default => 'Stato aggiornato'
         };
         setFlash('success', $label . '.');
-        redirect('prenotazioni.php');
+        redirect(BASE_URL . 'pages/prenotazioni.php');
     }
 
     if ($azione_post === 'elimina') {
         eliminaPrenotazione((int)$_POST['id']);
         setFlash('success', 'Prenotazione eliminata.');
-        redirect('prenotazioni.php');
+        redirect(BASE_URL . 'pages/prenotazioni.php');
     }
 }
 ?>
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if ($azione === 'lista'): ?>
     <div class="toolbar">
         <a href="?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
-        <a href="calendario.php" class="btn btn-info">Griglia Camere</a>
+        <a href="<?= BASE_URL ?>pages/calendario.php" class="btn btn-info">Griglia Camere</a>
         <div class="filtri">
             <a href="?stato=" class="btn btn-sm <?= !$filtroStato ? 'btn-primary' : 'btn-secondary' ?>">Tutte</a>
             <a href="?stato=confermata" class="btn btn-sm <?= $filtroStato === 'confermata' ? 'btn-primary' : 'btn-secondary' ?>">Confermate</a>
@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if (!$prenotazione): ?>
     <div class="alert alert-info">
-        La disponibilita della camera viene verificata automaticamente al salvataggio. Puoi controllare la <a href="calendario.php">griglia camere</a> per una visione d'insieme.
+        La disponibilita della camera viene verificata automaticamente al salvataggio. Puoi controllare la <a href="<?= BASE_URL ?>pages/calendario.php">griglia camere</a> per una visione d'insieme.
     </div>
     <?php endif; ?>
 
@@ -280,8 +280,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </fieldset>
 
         <button type="submit" class="btn btn-primary">Salva Prenotazione</button>
-        <a href="prenotazioni.php" class="btn btn-secondary">Annulla</a>
-        <a href="calendario.php" class="btn btn-info">Torna alla Griglia</a>
+        <a href="<?= BASE_URL ?>pages/prenotazioni.php" class="btn btn-secondary">Annulla</a>
+        <a href="<?= BASE_URL ?>pages/calendario.php" class="btn btn-info">Torna alla Griglia</a>
     </form>
 <?php endif; ?>
 

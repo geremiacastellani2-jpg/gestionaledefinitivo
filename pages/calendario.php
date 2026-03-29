@@ -38,7 +38,7 @@ $oggi = date('Y-m-d');
     <a href="?mese=<?= $mesePrecedente ?>" class="btn btn-secondary">&laquo; Precedente</a>
     <a href="?mese=<?= date('Y-m') ?>" class="btn btn-primary">Mese Corrente</a>
     <a href="?mese=<?= $meseSuccessivo ?>" class="btn btn-secondary">Successivo &raquo;</a>
-    <a href="prenotazioni.php?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
+    <a href="<?= BASE_URL ?>pages/prenotazioni.php?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
 </div>
 
 <div class="legenda">
@@ -97,10 +97,10 @@ $oggi = date('Y-m-d');
                     $tooltip .= "\nDal " . date('d/m', strtotime($pren['data_checkin'])) . ' al ' . date('d/m', strtotime($pren['data_checkout']));
                     $tooltip .= "\nPaga: " . ($pren['pagamento'] === 'sposi' ? 'SPOSI' : 'CLIENTE');
                     $tooltip .= "\nStato: " . ucfirst($pren['stato']);
-                    $link = 'prenotazioni.php?azione=modifica&id=' . $pren['id'];
+                    $link = BASE_URL . 'pages/prenotazioni.php?azione=modifica&id=' . $pren['id'];
                 } else {
                     $tooltip = 'Disponibile - clicca per prenotare';
-                    $link = 'prenotazioni.php?azione=nuova&camera_id=' . $camera['id'] . '&checkin=' . $dataGiorno;
+                    $link = BASE_URL . 'pages/prenotazioni.php?azione=nuova&camera_id=' . $camera['id'] . '&checkin=' . $dataGiorno;
                 }
             ?>
                 <td class="giorno-col <?= $classe ?>"

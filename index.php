@@ -44,9 +44,9 @@ $prenotazioni = contaPrenotazioni();
 
 <div class="quick-actions">
     <h2>Azioni Rapide</h2>
-    <a href="pages/camere.php?azione=nuova" class="btn btn-primary">+ Nuova Camera</a>
-    <a href="pages/prenotazioni.php?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
-    <a href="pages/calendario.php" class="btn btn-info">Calendario</a>
+    <a href="<?= BASE_URL ?>pages/camere.php?azione=nuova" class="btn btn-primary">+ Nuova Camera</a>
+    <a href="<?= BASE_URL ?>pages/prenotazioni.php?azione=nuova" class="btn btn-success">+ Nuova Prenotazione</a>
+    <a href="<?= BASE_URL ?>pages/calendario.php" class="btn btn-info">Calendario</a>
 </div>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

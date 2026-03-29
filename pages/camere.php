@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             setFlash('error', 'Errore nel salvare la camera.');
         }
-        redirect('camere.php');
+        redirect(BASE_URL . 'pages/camere.php');
     }
 
     if ($azione_post === 'elimina') {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (PDOException $ex) {
             setFlash('error', 'Impossibile eliminare: la camera ha prenotazioni associate.');
         }
-        redirect('camere.php');
+        redirect(BASE_URL . 'pages/camere.php');
     }
 }
 ?>
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <button type="submit" class="btn btn-primary">Salva</button>
-        <a href="camere.php" class="btn btn-secondary">Annulla</a>
+        <a href="<?= BASE_URL ?>pages/camere.php" class="btn btn-secondary">Annulla</a>
     </form>
 <?php endif; ?>
 
