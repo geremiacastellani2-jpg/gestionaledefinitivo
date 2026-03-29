@@ -1,9 +1,9 @@
 <?php
 // Configurazione Database
-define('DB_HOST', '31.11.39.251');
-define('DB_NAME', 'Sql1896681_4');
-define('DB_USER', 'Sql1896681');
-define('DB_PASS', 'Tudmof-bybcyg-4zumny');
+define('DB_HOST', '31.11.39.107');
+define('DB_NAME', 'Sql1711789_2');
+define('DB_USER', 'Sql1711789');
+define('DB_PASS', 'Vobred-sibpec-monfy7');
 define('DB_CHARSET', 'utf8mb4');
 
 // Configurazione Applicazione
