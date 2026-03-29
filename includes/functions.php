@@ -226,22 +226,39 @@ function getPrezzoPerOspiti(int $numOspiti): float {
     };
 }
 
+function getCamereDisponibili(string $checkin, string $checkout): array {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT c.* FROM camere c
+        WHERE c.stato = 'disponibile'
+        AND c.id NOT IN (
+            SELECT p.camera_id FROM prenotazioni p
+            WHERE p.stato != 'cancellata'
+            AND p.data_checkin < ? AND p.data_checkout > ?
+        )
+        ORDER BY c.numero");
+    $stmt->execute([$checkout, $checkin]);
+    return $stmt->fetchAll();
+}
+
 function salvaRichiestaSposi(array $data): bool {
     $db = getDB();
     $camere = json_decode($data['camere'], true);
-    $checkin = new DateTime($data['data_checkin']);
-    $checkout = new DateTime($data['data_checkout']);
-    $notti = $checkin->diff($checkout)->days;
 
     $prezzoTotale = 0;
     foreach ($camere as $camera) {
+        $checkin = new DateTime($camera['data_checkin']);
+        $checkout = new DateTime($camera['data_checkout']);
+        $notti = $checkin->diff($checkout)->days;
         $prezzoTotale += getPrezzoPerOspiti((int)$camera['num_ospiti']) * $notti;
     }
+
+    $dataCheckinMin = min(array_column($camere, 'data_checkin'));
+    $dataCheckoutMax = max(array_column($camere, 'data_checkout'));
 
     $stmt = $db->prepare('INSERT INTO richieste_sposi (nome_sposi, email, telefono, data_checkin, data_checkout, camere, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     return $stmt->execute([
         $data['nome_sposi'], $data['email'], $data['telefono'],
-        $data['data_checkin'], $data['data_checkout'],
+        $dataCheckinMin, $dataCheckoutMax,
         $data['camere'], $prezzoTotale, $data['note'] ?? ''
     ]);
 }
