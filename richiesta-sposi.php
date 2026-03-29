@@ -20,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($camere)) {
             $errore = 'Aggiungi almeno una camera.';
         } else {
-            // Validazione camere
             $valido = true;
             foreach ($camere as $cam) {
                 if (empty($cam['nome']) || empty($cam['cognome']) || empty($cam['email']) || empty($cam['telefono'])) {
@@ -35,18 +34,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$valido) {
                 $errore = 'Compila tutti i campi obbligatori per ogni camera.';
             } else {
-                $ok = salvaRichiestaSposi([
-                    'nome_sposi' => $nomeSposi,
-                    'email' => $emailSposi,
-                    'telefono' => $telefonoSposi,
-                    'camere' => $camereJson,
-                    'note' => $note,
-                ]);
-                if ($ok) {
-                    $inviata = true;
-                    $nomeInviato = $nomeSposi;
+                // Verifica disponibilita in tempo reale e crea prenotazioni
+                $db = getDB();
+                $tuttoOk = true;
+                $cameraOccupata = '';
+
+                // Controlla prima tutte le disponibilita
+                foreach ($camere as $cam) {
+                    if (!cameraDisponibile((int)$cam['camera_id'], $cam['data_checkin'], $cam['data_checkout'])) {
+                        $tuttoOk = false;
+                        $cameraOccupata = $cam['camera_label'] ?? 'Camera #' . $cam['camera_id'];
+                        break;
+                    }
+                }
+
+                if (!$tuttoOk) {
+                    $errore = 'La camera "' . $cameraOccupata . '" non e\' piu\' disponibile per le date selezionate. Riprova scegliendo un\'altra camera.';
                 } else {
-                    $errore = 'Errore nel salvataggio. Riprova.';
+                    // Tutto disponibile: crea clienti e prenotazioni
+                    try {
+                        $db->beginTransaction();
+
+                        foreach ($camere as $cam) {
+                            // Crea cliente
+                            $clienteId = salvaCliente([
+                                'nome' => $cam['nome'],
+                                'cognome' => $cam['cognome'],
+                                'email' => $cam['email'],
+                                'telefono' => $cam['telefono'],
+                                'documento_tipo' => 'carta_identita',
+                                'documento_numero' => $cam['documento_numero'] ?? '',
+                                'note' => !empty($cam['documento_foto'])
+                                    ? 'Foto documento: ' . $cam['documento_foto'] . ' | Prenotazione sposi: ' . $nomeSposi
+                                    : 'Prenotazione sposi: ' . $nomeSposi,
+                            ]);
+
+                            // Calcola prezzo con tariffe sposi
+                            $checkin = new DateTime($cam['data_checkin']);
+                            $checkout = new DateTime($cam['data_checkout']);
+                            $notti = $checkin->diff($checkout)->days;
+                            $prezzoTotale = getPrezzoPerOspiti((int)$cam['num_ospiti']) * $notti;
+
+                            // Crea prenotazione
+                            $stmt = $db->prepare('INSERT INTO prenotazioni (camera_id, cliente_id, data_checkin, data_checkout, stato, pagamento, num_ospiti, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                            $stmt->execute([
+                                (int)$cam['camera_id'],
+                                $clienteId,
+                                $cam['data_checkin'],
+                                $cam['data_checkout'],
+                                'confermata',
+                                'sposi',
+                                (int)$cam['num_ospiti'],
+                                $prezzoTotale,
+                                $note ? 'Sposi: ' . $nomeSposi . ' | ' . $note : 'Sposi: ' . $nomeSposi,
+                            ]);
+                        }
+
+                        $db->commit();
+                        $inviata = true;
+                        $nomeInviato = $nomeSposi;
+                    } catch (Exception $ex) {
+                        $db->rollBack();
+                        $errore = 'Errore nel salvataggio. Riprova.';
+                    }
                 }
             }
         }
@@ -210,9 +260,9 @@ $apiBase = BASE_URL . 'api/';
 <?php if ($inviata): ?>
     <div class="successo">
         <div class="icona">&#10004;</div>
-        <h2>Richiesta inviata!</h2>
-        <p>Grazie <?= e($nomeInviato) ?>! Abbiamo ricevuto la tua richiesta.<br>
-        Ti contatteremo al piu presto per confermare la disponibilita.</p>
+        <h2>Prenotazione confermata!</h2>
+        <p>Grazie <?= e($nomeInviato) ?>! La prenotazione e' stata registrata con successo.<br>
+        Le camere sono state riservate per le date selezionate.</p>
     </div>
 <?php else: ?>
     <div class="card-header">
