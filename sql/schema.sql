@@ -63,3 +63,14 @@ CREATE TABLE IF NOT EXISTS richieste_sposi (
     INDEX idx_stato (stato),
     INDEX idx_date (data_checkin, data_checkout)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cibi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    operatore VARCHAR(100) NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descrizione TEXT,
+    peso VARCHAR(50) NOT NULL,
+    cella VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

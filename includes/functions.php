@@ -278,6 +278,50 @@ function contaRichiesteNuove(): int {
     return (int)$db->query("SELECT COUNT(*) FROM richieste_sposi WHERE stato = 'nuova'")->fetchColumn();
 }
 
+// --- CIBI ---
+
+function getCibi(): array {
+    $db = getDB();
+    return $db->query('SELECT * FROM cibi ORDER BY nome')->fetchAll();
+}
+
+function getCibo(int $id): ?array {
+    $db = getDB();
+    $stmt = $db->prepare('SELECT * FROM cibi WHERE id = ?');
+    $stmt->execute([$id]);
+    return $stmt->fetch() ?: null;
+}
+
+function salvaCibo(array $data): int {
+    $db = getDB();
+    if (!empty($data['id'])) {
+        $stmt = $db->prepare('UPDATE cibi SET operatore=?, nome=?, descrizione=?, peso=?, cella=? WHERE id=?');
+        $stmt->execute([
+            $data['operatore'], $data['nome'], $data['descrizione'],
+            $data['peso'], $data['cella'], $data['id']
+        ]);
+        return (int)$data['id'];
+    } else {
+        $stmt = $db->prepare('INSERT INTO cibi (operatore, nome, descrizione, peso, cella) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([
+            $data['operatore'], $data['nome'], $data['descrizione'],
+            $data['peso'], $data['cella']
+        ]);
+        return (int)$db->lastInsertId();
+    }
+}
+
+function eliminaCibo(int $id): bool {
+    $db = getDB();
+    $stmt = $db->prepare('DELETE FROM cibi WHERE id = ?');
+    return $stmt->execute([$id]);
+}
+
+function contaCibi(): int {
+    $db = getDB();
+    return (int)$db->query('SELECT COUNT(*) FROM cibi')->fetchColumn();
+}
+
 // --- UTILITA ---
 
 function e(string $str): string {
