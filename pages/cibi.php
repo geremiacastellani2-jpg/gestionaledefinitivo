@@ -1,7 +1,6 @@
 <?php
 $titoloPagina = 'Gestione Cibi';
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/auth_cibi.php';
+require_once __DIR__ . '/../includes/header_cibi.php';
 
 $azione = $_GET['azione'] ?? 'lista';
 
@@ -54,16 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($azione === 'lista'):
     $cibi = getCibi();
 ?>
-
-<div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:0.5rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem;">
-    <span>Utente: <strong><?= e($_SESSION['cibi_username']) ?></strong><?= $cibiIsAdmin ? ' (admin)' : '' ?></span>
-    <span>
-        <?php if ($cibiIsAdmin): ?>
-            <a href="?azione=utenti" class="btn btn-sm btn-secondary">Gestione Utenti</a>
-        <?php endif; ?>
-        <a href="?logout_cibi=1" class="btn btn-sm btn-danger">Esci Cibi</a>
-    </span>
-</div>
 
 <div class="toolbar">
     <h1>Gestione Cibi</h1>
@@ -393,11 +382,6 @@ function wrapText(ctx, text, maxWidth) {
 <?php elseif ($azione === 'utenti' && $cibiIsAdmin):
     $utenti = getUtentiCibi();
 ?>
-
-<div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:0.5rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem;">
-    <span>Utente: <strong><?= e($_SESSION['cibi_username']) ?></strong> (admin)</span>
-    <a href="?logout_cibi=1" class="btn btn-sm btn-danger">Esci Cibi</a>
-</div>
 
 <div class="toolbar">
     <h1>Gestione Utenti Cibi</h1>

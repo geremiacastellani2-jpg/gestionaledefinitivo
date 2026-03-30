@@ -1,7 +1,6 @@
 <?php
 $titoloPagina = 'Dettaglio Prodotto';
-require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/auth_cibi.php';
+require_once __DIR__ . '/../includes/header_cibi.php';
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) {

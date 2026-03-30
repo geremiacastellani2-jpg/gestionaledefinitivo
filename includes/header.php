@@ -43,7 +43,7 @@ $paginaCorrente = basename($_SERVER['PHP_SELF'], '.php');
         <li><a href="<?= BASE_URL ?>pages/camere.php" class="<?= $paginaCorrente === 'camere' ? 'active' : '' ?>">Anagrafica Camere</a></li>
         <li><a href="<?= BASE_URL ?>pages/clienti.php" class="<?= $paginaCorrente === 'clienti' ? 'active' : '' ?>">Clienti</a></li>
         <li><a href="<?= BASE_URL ?>pages/richieste.php" class="<?= $paginaCorrente === 'richieste' ? 'active' : '' ?>">Richieste Sposi</a></li>
-        <li><a href="<?= BASE_URL ?>pages/cibi.php" class="<?= $paginaCorrente === 'cibi' || $paginaCorrente === 'cibo-dettaglio' ? 'active' : '' ?>">Cibi</a></li>
+        <li><a href="<?= BASE_URL ?>pages/cibi.php" style="color:#64748b;">Cibi</a></li>
         <li><a href="?logout_gestionale=1" style="color:#ef4444;">Esci</a></li>
     </ul>
     <?php endif; ?>
@@ -65,6 +65,7 @@ $paginaCorrente = basename($_SERVER['PHP_SELF'], '.php');
             style="width:100%; padding:0.75rem; font-size:1.1rem; border:2px solid #cbd5e1; border-radius:8px; margin-bottom:1rem; box-sizing:border-box;">
         <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem; font-size:1.1rem;">Accedi</button>
     </form>
+    <a href="<?= BASE_URL ?>pages/cibi.php" style="display:inline-block; margin-top:1rem; color:#64748b; font-size:0.85rem;">Vai alla Gestione Cibi</a>
 </div>
 <?php require_once __DIR__ . '/footer.php'; exit; ?>
 <?php endif; ?>
