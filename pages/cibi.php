@@ -137,7 +137,7 @@ if ($azione === 'lista'):
         redirect(BASE_URL . 'pages/cibi.php');
     }
     $urlProdotto = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . BASE_URL . 'pages/cibo-dettaglio.php?id=' . $cibo['id'];
-    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' . urlencode($urlProdotto);
+    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' . urlencode($urlProdotto);
 ?>
 
 <div class="toolbar">
@@ -155,7 +155,7 @@ if ($azione === 'lista'):
 <div class="etichetta-preview" id="etichettaPreview">
     <div class="etichetta-card">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="150" height="150">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="80" height="80">
         </div>
         <div class="etichetta-info">
             <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
@@ -183,27 +183,27 @@ if ($azione === 'lista'):
     .etichetta-card {
         background: #fff;
         border: 2px solid #1e293b;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
         display: flex;
-        gap: 1.5rem;
+        gap: 0.7rem;
         align-items: center;
-        max-width: 500px;
+        max-width: 280px;
         width: 100%;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .etichetta-qr { flex-shrink: 0; }
-    .etichetta-qr img { border-radius: 8px; border: 1px solid #e2e8f0; }
+    .etichetta-qr img { border-radius: 4px; border: 1px solid #e2e8f0; }
     .etichetta-info { flex: 1; }
     .etichetta-nome {
-        font-size: 1.4rem; font-weight: 800; color: #1e293b;
-        margin-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem;
+        font-size: 0.85rem; font-weight: 800; color: #1e293b;
+        margin-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;
     }
     .etichetta-dettagli {
-        display: flex; gap: 1rem; font-size: 0.9rem; color: #475569; margin-bottom: 0.3rem;
+        display: flex; gap: 0.5rem; font-size: 0.6rem; color: #475569; margin-bottom: 0.15rem;
     }
     .etichetta-desc {
-        font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; font-style: italic;
+        font-size: 0.55rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
     }
 
     @media (max-width: 600px) {
@@ -215,7 +215,12 @@ if ($azione === 'lista'):
         body * { visibility: hidden; }
         .etichetta-preview, .etichetta-preview * { visibility: visible; }
         .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
-        .etichetta-card { border: 2px solid #000; box-shadow: none; flex-direction: row !important; text-align: left !important; }
+        .etichetta-card {
+            border: 2px solid #000; box-shadow: none;
+            flex-direction: row !important; text-align: left !important;
+            max-width: 280px;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
         .etichetta-dettagli { justify-content: flex-start !important; }
     }
 </style>
@@ -231,21 +236,25 @@ var ETICHETTA = {
 };
 
 function scaricaImmagine() {
-    var W = 800;
-    var H = 400;
+    var scale = 2;
+    var W = 800 * scale;
+    var H = 400 * scale;
     var canvas = document.getElementById('etichettaCanvas');
     canvas.width = W;
     canvas.height = H;
     var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    var w = 800, h = 400;
 
     // Sfondo bianco
     ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, w, h);
 
     // Bordo
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 3;
-    ctx.strokeRect(4, 4, W - 8, H - 8);
+    ctx.strokeRect(4, 4, w - 8, h - 8);
 
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
@@ -253,7 +262,7 @@ function scaricaImmagine() {
         // QR a sinistra
         var qrSize = 240;
         var qrX = 40;
-        var qrY = (H - qrSize) / 2;
+        var qrY = (h - qrSize) / 2;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
         // Info a destra
@@ -264,7 +273,7 @@ function scaricaImmagine() {
         ctx.fillStyle = '#1e293b';
         ctx.font = 'bold 32px sans-serif';
         ctx.textAlign = 'left';
-        var lines = wrapText(ctx, ETICHETTA.nome, W - textX - 30);
+        var lines = wrapText(ctx, ETICHETTA.nome, w - textX - 30);
         lines.forEach(function(line) {
             ctx.fillText(line, textX, y);
             y += 38;
@@ -276,7 +285,7 @@ function scaricaImmagine() {
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(textX, y);
-        ctx.lineTo(W - 30, y);
+        ctx.lineTo(w - 30, y);
         ctx.stroke();
         y += 24;
 
