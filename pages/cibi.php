@@ -215,7 +215,8 @@ if ($azione === 'lista'):
         body * { visibility: hidden; }
         .etichetta-preview, .etichetta-preview * { visibility: visible; }
         .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
-        .etichetta-card { border: 2px solid #000; box-shadow: none; }
+        .etichetta-card { border: 2px solid #000; box-shadow: none; flex-direction: row !important; text-align: left !important; }
+        .etichetta-dettagli { justify-content: flex-start !important; }
     }
 </style>
 
