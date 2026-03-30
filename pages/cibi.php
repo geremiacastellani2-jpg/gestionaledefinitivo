@@ -137,7 +137,7 @@ if ($azione === 'lista'):
         redirect(BASE_URL . 'pages/cibi.php');
     }
     $urlProdotto = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . BASE_URL . 'pages/cibo-dettaglio.php?id=' . $cibo['id'];
-    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($urlProdotto);
+    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=' . urlencode($urlProdotto);
 ?>
 
 <div class="toolbar">
@@ -148,90 +148,192 @@ if ($azione === 'lista'):
     </div>
 </div>
 
+<div class="alert alert-info" style="font-size:0.85rem;">
+    Ottimizzato per <strong>Godex G500</strong> (203 DPI) - Etichette <strong>50mm x 90mm</strong>
+</div>
+
 <div class="etichetta-preview" id="etichettaPreview">
-    <div class="etichetta-card">
+    <div class="etichetta-card" id="etichettaCard">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" width="150" height="150">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code">
         </div>
-        <div class="etichetta-info">
-            <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
-            <div class="etichetta-dettagli">
-                <span><strong>Peso:</strong> <?= e($cibo['peso']) ?></span>
-                <span><strong>Cella:</strong> <?= e($cibo['cella']) ?></span>
+        <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
+        <div class="etichetta-grid">
+            <div class="etichetta-campo">
+                <span class="etichetta-label">Peso</span>
+                <span class="etichetta-valore"><?= e($cibo['peso']) ?></span>
             </div>
-            <div class="etichetta-dettagli">
-                <span><strong>Operatore:</strong> <?= e($cibo['operatore']) ?></span>
-                <span><strong>Data:</strong> <?= date('d/m/Y', strtotime($cibo['created_at'])) ?></span>
+            <div class="etichetta-campo">
+                <span class="etichetta-label">Cella</span>
+                <span class="etichetta-valore"><?= e($cibo['cella']) ?></span>
             </div>
-            <?php if ($cibo['descrizione']): ?>
-                <div class="etichetta-desc"><?= e($cibo['descrizione']) ?></div>
-            <?php endif; ?>
+        </div>
+        <div class="etichetta-grid">
+            <div class="etichetta-campo">
+                <span class="etichetta-label">Operatore</span>
+                <span class="etichetta-valore etichetta-valore-sm"><?= e($cibo['operatore']) ?></span>
+            </div>
+            <div class="etichetta-campo">
+                <span class="etichetta-label">Data</span>
+                <span class="etichetta-valore etichetta-valore-sm"><?= date('d/m/Y', strtotime($cibo['created_at'])) ?></span>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+    /* === ANTEPRIMA ETICHETTA A SCHERMO === */
     .etichetta-preview {
         display: flex;
         justify-content: center;
-        margin-top: 2rem;
+        margin-top: 1.5rem;
     }
     .etichetta-card {
+        /* Dimensioni reali etichetta: 50mm x 90mm - in anteprima scala 2x */
+        width: 100mm;
+        height: 180mm;
         background: #fff;
         border: 2px solid #1e293b;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 4px;
+        padding: 6mm;
         display: flex;
-        gap: 1.5rem;
+        flex-direction: column;
         align-items: center;
-        max-width: 500px;
-        width: 100%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
     }
     .etichetta-qr {
-        flex-shrink: 0;
+        margin-bottom: 4mm;
     }
     .etichetta-qr img {
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-    }
-    .etichetta-info {
-        flex: 1;
+        width: 56mm;
+        height: 56mm;
     }
     .etichetta-nome {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 0.4rem;
+        font-size: 16pt;
+        font-weight: 900;
+        color: #000;
+        text-align: center;
+        width: 100%;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 2mm;
+        margin-bottom: 3mm;
+        line-height: 1.2;
+        word-break: break-word;
     }
-    .etichetta-dettagli {
+    .etichetta-grid {
         display: flex;
-        gap: 1rem;
-        font-size: 0.9rem;
-        color: #475569;
-        margin-bottom: 0.3rem;
+        width: 100%;
+        gap: 3mm;
+        margin-bottom: 2mm;
     }
-    .etichetta-desc {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-top: 0.5rem;
-        font-style: italic;
+    .etichetta-campo {
+        flex: 1;
+        text-align: center;
+    }
+    .etichetta-label {
+        display: block;
+        font-size: 6pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #666;
+        letter-spacing: 0.5px;
+    }
+    .etichetta-valore {
+        display: block;
+        font-size: 12pt;
+        font-weight: 800;
+        color: #000;
+        line-height: 1.3;
+    }
+    .etichetta-valore-sm {
+        font-size: 9pt;
+        font-weight: 600;
     }
 
+    /* === STAMPA - Godex G500, 203 DPI, 50mm x 90mm === */
     @media print {
-        body * { visibility: hidden; }
-        .etichetta-preview, .etichetta-preview * { visibility: visible; }
-        .etichetta-preview {
-            position: absolute;
-            left: 0;
-            top: 0;
+        @page {
+            size: 50mm 90mm;
             margin: 0;
         }
+
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 50mm;
+            height: 90mm;
+            background: #fff !important;
+        }
+
+        /* Nascondi tutto tranne etichetta */
+        body > * { display: none !important; }
+        body > main { display: block !important; }
+        main > * { display: none !important; }
+        .etichetta-preview { display: flex !important; }
+
+        .navbar, .footer, .toolbar, .alert, .container > *:not(.etichetta-preview) {
+            display: none !important;
+        }
+
+        .container {
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .etichetta-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 50mm;
+            height: 90mm;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
         .etichetta-card {
-            border: 2px solid #000;
-            box-shadow: none;
+            width: 50mm !important;
+            height: 90mm !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 2mm 3mm !important;
+            margin: 0 !important;
+        }
+
+        .etichetta-qr {
+            margin-bottom: 1.5mm !important;
+        }
+        .etichetta-qr img {
+            width: 28mm !important;
+            height: 28mm !important;
+        }
+
+        .etichetta-nome {
+            font-size: 10pt !important;
+            font-weight: 900 !important;
+            padding-bottom: 1mm !important;
+            margin-bottom: 1.5mm !important;
+            border-bottom: 0.8px solid #000 !important;
+        }
+
+        .etichetta-grid {
+            gap: 1.5mm !important;
+            margin-bottom: 1mm !important;
+        }
+
+        .etichetta-label {
+            font-size: 5pt !important;
+        }
+        .etichetta-valore {
+            font-size: 8pt !important;
+        }
+        .etichetta-valore-sm {
+            font-size: 6.5pt !important;
         }
     }
 </style>
