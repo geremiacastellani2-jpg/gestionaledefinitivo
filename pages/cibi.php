@@ -1,11 +1,31 @@
 <?php
 $titoloPagina = 'Gestione Cibi';
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/auth_cibi.php';
 
 $azione = $_GET['azione'] ?? 'lista';
 
 // --- POST: Salva / Elimina ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['crea_utente']) && $cibiIsAdmin) {
+        $nuovoUser = trim($_POST['nuovo_username'] ?? '');
+        $nuovaPass = $_POST['nuovo_password'] ?? '';
+        if ($nuovoUser && strlen($nuovaPass) >= 4) {
+            if (creaUtenteCibi($nuovoUser, $nuovaPass)) {
+                setFlash('success', "Utente '$nuovoUser' creato.");
+            } else {
+                setFlash('error', "Username '$nuovoUser' già esistente.");
+            }
+        } else {
+            setFlash('error', 'Username e password (min 4 caratteri) obbligatori.');
+        }
+        redirect(BASE_URL . 'pages/cibi.php?azione=utenti');
+    }
+    if (isset($_POST['elimina_utente']) && $cibiIsAdmin) {
+        eliminaUtenteCibi((int)$_POST['utente_id']);
+        setFlash('success', 'Utente eliminato.');
+        redirect(BASE_URL . 'pages/cibi.php?azione=utenti');
+    }
     if (isset($_POST['salva'])) {
         $id = salvaCibo([
             'id' => $_POST['id'] ?? '',
@@ -34,6 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($azione === 'lista'):
     $cibi = getCibi();
 ?>
+
+<div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:0.5rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem;">
+    <span>Utente: <strong><?= e($_SESSION['cibi_username']) ?></strong><?= $cibiIsAdmin ? ' (admin)' : '' ?></span>
+    <span>
+        <?php if ($cibiIsAdmin): ?>
+            <a href="?azione=utenti" class="btn btn-sm btn-secondary">Gestione Utenti</a>
+        <?php endif; ?>
+        <a href="?logout_cibi=1" class="btn btn-sm btn-danger">Esci Cibi</a>
+    </span>
+</div>
 
 <div class="toolbar">
     <h1>Gestione Cibi</h1>
@@ -359,6 +389,63 @@ function wrapText(ctx, text, maxWidth) {
     return lines;
 }
 </script>
+
+<?php elseif ($azione === 'utenti' && $cibiIsAdmin):
+    $utenti = getUtentiCibi();
+?>
+
+<div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:0.5rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem;">
+    <span>Utente: <strong><?= e($_SESSION['cibi_username']) ?></strong> (admin)</span>
+    <a href="?logout_cibi=1" class="btn btn-sm btn-danger">Esci Cibi</a>
+</div>
+
+<div class="toolbar">
+    <h1>Gestione Utenti Cibi</h1>
+    <a href="<?= BASE_URL ?>pages/cibi.php" class="btn btn-secondary">Torna ai Cibi</a>
+</div>
+
+<div class="card" style="max-width:500px; margin-bottom:2rem;">
+    <h3 style="margin-bottom:1rem;">Nuovo utente</h3>
+    <form method="post">
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <input type="text" name="nuovo_username" placeholder="Username" required
+                style="flex:1; min-width:120px; padding:0.5rem; border:2px solid #cbd5e1; border-radius:6px;">
+            <input type="password" name="nuovo_password" placeholder="Password (min 4 car.)" required minlength="4"
+                style="flex:1; min-width:150px; padding:0.5rem; border:2px solid #cbd5e1; border-radius:6px;">
+            <button type="submit" name="crea_utente" value="1" class="btn btn-primary">Crea</button>
+        </div>
+    </form>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Ruolo</th>
+            <th>Creato il</th>
+            <th>Azioni</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($utenti as $u): ?>
+        <tr>
+            <td><strong><?= e($u['username']) ?></strong></td>
+            <td><?= $u['is_admin'] ? '<span class="badge badge-confermata">Admin</span>' : 'Utente' ?></td>
+            <td><?= date('d/m/Y H:i', strtotime($u['created_at'])) ?></td>
+            <td>
+                <?php if (!$u['is_admin']): ?>
+                <form method="post" style="display:inline;" onsubmit="return confirm('Eliminare utente <?= e($u['username']) ?>?')">
+                    <input type="hidden" name="utente_id" value="<?= $u['id'] ?>">
+                    <button type="submit" name="elimina_utente" value="1" class="btn btn-sm btn-danger">Elimina</button>
+                </form>
+                <?php else: ?>
+                    <span style="color:#94a3b8; font-size:0.85rem;">Non eliminabile</span>
+                <?php endif; ?>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
 
 <?php endif; ?>
 

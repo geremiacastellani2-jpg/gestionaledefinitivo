@@ -339,6 +339,66 @@ function contaCibi(): int {
     return (int)$db->query('SELECT COUNT(*) FROM cibi')->fetchColumn();
 }
 
+// --- UTENTI CIBI ---
+
+function initUtentiCibi(): void {
+    $db = getDB();
+    $db->exec("CREATE TABLE IF NOT EXISTS utenti_cibi (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        is_admin TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Crea admin se non esiste
+    $stmt = $db->prepare('SELECT COUNT(*) FROM utenti_cibi WHERE username = ?');
+    $stmt->execute(['admin']);
+    if ($stmt->fetchColumn() == 0) {
+        $hash = password_hash('Villa2024!', PASSWORD_BCRYPT);
+        $stmt = $db->prepare('INSERT INTO utenti_cibi (username, password_hash, is_admin) VALUES (?, ?, 1)');
+        $stmt->execute(['admin', $hash]);
+    }
+}
+
+function loginUtenteCibi(string $username, string $password): ?array {
+    $db = getDB();
+    $stmt = $db->prepare('SELECT * FROM utenti_cibi WHERE username = ?');
+    $stmt->execute([$username]);
+    $utente = $stmt->fetch();
+    if ($utente && password_verify($password, $utente['password_hash'])) {
+        return $utente;
+    }
+    return null;
+}
+
+function getUtentiCibi(): array {
+    $db = getDB();
+    return $db->query('SELECT id, username, is_admin, created_at FROM utenti_cibi ORDER BY username')->fetchAll();
+}
+
+function creaUtenteCibi(string $username, string $password): bool {
+    $db = getDB();
+    $hash = password_hash($password, PASSWORD_BCRYPT);
+    $stmt = $db->prepare('INSERT INTO utenti_cibi (username, password_hash) VALUES (?, ?)');
+    try {
+        return $stmt->execute([$username, $hash]);
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+function eliminaUtenteCibi(int $id): bool {
+    $db = getDB();
+    // Non eliminare admin
+    $stmt = $db->prepare('SELECT is_admin FROM utenti_cibi WHERE id = ?');
+    $stmt->execute([$id]);
+    $utente = $stmt->fetch();
+    if ($utente && $utente['is_admin']) return false;
+    $stmt = $db->prepare('DELETE FROM utenti_cibi WHERE id = ?');
+    return $stmt->execute([$id]);
+}
+
 // --- UTILITA ---
 
 function e(string $str): string {
