@@ -245,9 +245,10 @@ if ($azione === 'lista'):
         .etichetta-card {
             width: 50mm !important; height: 90mm !important; border: none !important;
             border-radius: 0 !important; box-shadow: none !important; padding: 2mm 3mm !important; margin: 0 !important;
+            justify-content: center !important;
         }
         .etichetta-qr { margin-bottom: 1.5mm !important; }
-        .etichetta-qr img { width: 28mm !important; height: 28mm !important; }
+        .etichetta-qr img { width: 26mm !important; height: 26mm !important; }
         .etichetta-nome { font-size: 10pt !important; padding-bottom: 1mm !important; margin-bottom: 1.5mm !important; border-bottom: 0.8px solid #000 !important; }
         .etichetta-grid { gap: 1.5mm !important; margin-bottom: 1mm !important; }
         .etichetta-label { font-size: 5pt !important; }
@@ -285,22 +286,30 @@ function scaricaImmagine() {
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.onload = function() {
-        // QR centrato in alto (224x224 px ~ 28mm a 203dpi)
-        var qrSize = 224;
-        var qrX = (W - qrSize) / 2;
-        var qrY = 16;
-        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        // Calcola altezza totale del contenuto per centrarlo verticalmente
+        ctx.font = 'bold 28px sans-serif';
+        var nomeLines = wrapText(ctx, ETICHETTA.nome, W - 30);
 
-        var y = qrY + qrSize + 14;
+        var qrSize = 224;
+        var contentH = qrSize + 14                    // QR + gap
+            + (nomeLines.length * 32)                 // nome
+            + 4 + 2 + 16                              // linea separatrice
+            + 14 + 22 + 24 + 32                       // peso/cella labels + values
+            + 14 + 20 + 18;                           // operatore/data labels + values
+        var startY = Math.max(20, (H - contentH) / 2);
+
+        // QR centrato
+        var qrX = (W - qrSize) / 2;
+        ctx.drawImage(qrImg, qrX, startY, qrSize, qrSize);
+
+        var y = startY + qrSize + 14;
 
         // Nome prodotto
         ctx.fillStyle = '#000';
         ctx.font = 'bold 28px sans-serif';
         ctx.textAlign = 'center';
 
-        // Testo con word wrap
-        var lines = wrapText(ctx, ETICHETTA.nome, W - 30);
-        lines.forEach(function(line) {
+        nomeLines.forEach(function(line) {
             ctx.fillText(line, W / 2, y);
             y += 32;
         });
