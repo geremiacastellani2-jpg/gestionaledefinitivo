@@ -355,7 +355,7 @@ function initUtentiCibi(): void {
     $stmt = $db->prepare('SELECT COUNT(*) FROM utenti_cibi WHERE username = ?');
     $stmt->execute(['admin']);
     if ($stmt->fetchColumn() == 0) {
-        $hash = password_hash('Villa2024!', PASSWORD_BCRYPT);
+        $hash = password_hash('admin', PASSWORD_BCRYPT);
         $stmt = $db->prepare('INSERT INTO utenti_cibi (username, password_hash, is_admin) VALUES (?, ?, 1)');
         $stmt->execute(['admin', $hash]);
     }
