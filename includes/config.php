@@ -11,8 +11,8 @@ define('APP_NAME', 'Gestionale Hotel');
 define('APP_VERSION', '1.0.0');
 define('BASE_URL', '/gestionale/');
 
-// Password accesso gestionale (bcrypt di 'admin')
-define('GESTIONALE_PASSWORD_HASH', '$2y$12$dvwNUYytQgE04bnmz4Z/oO0Dq/m6nLT6TQ.Hhv1xQhYB8kLeqYZ3S');
+// Password accesso gestionale (bcrypt di 'Villa2024!')
+define('GESTIONALE_PASSWORD_HASH', '$2y$12$Vg.UrLri38c7VeGMvGaH4udQkntBvKjX2T6V1MYv8rtFzYj6JI52q');
 
 // Timezone
 date_default_timezone_set('Europe/Rome');
