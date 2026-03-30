@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $note = trim($_POST['note'] ?? '');
     $camereJson = $_POST['camere_json'] ?? '[]';
 
-    if (!$nomeSposi || !$emailSposi || !$telefonoSposi) {
-        $errore = 'Compila i dati degli sposi (nome, email, telefono).';
+    if (!$nomeSposi) {
+        $errore = 'Inserisci il nome degli sposi.';
     } else {
         $camere = json_decode($camereJson, true);
         if (empty($camere)) {
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $valido = true;
             foreach ($camere as $cam) {
-                if (empty($cam['nome']) || empty($cam['cognome']) || empty($cam['email']) || empty($cam['telefono'])) {
+                if (empty($cam['nome']) || empty($cam['cognome'])) {
                     $valido = false;
                     break;
                 }
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             if (!$valido) {
-                $errore = 'Compila tutti i campi obbligatori per ogni camera.';
+                $errore = 'Compila tutti i campi obbligatori per ogni camera (date, camera, nome e cognome).';
             } else {
                 // Verifica disponibilita in tempo reale e crea prenotazioni
                 $db = getDB();
@@ -60,9 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $clienteId = salvaCliente([
                                 'nome' => $cam['nome'],
                                 'cognome' => $cam['cognome'],
-                                'email' => $cam['email'],
-                                'telefono' => $cam['telefono'],
-                                'documento_tipo' => 'carta_identita',
+                                'email' => $cam['email'] ?? '',
+                                'telefono' => $cam['telefono'] ?? '',
+                                'documento_tipo' => $cam['documento_tipo'] ?? 'carta_identita',
                                 'documento_numero' => $cam['documento_numero'] ?? '',
                                 'note' => !empty($cam['documento_foto'])
                                     ? 'Foto documento: ' . $cam['documento_foto'] . ' | Prenotazione sposi: ' . $nomeSposi
@@ -75,6 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $notti = $checkin->diff($checkout)->days;
                             $prezzoTotale = getPrezzoPerOspiti((int)$cam['num_ospiti']) * $notti;
 
+                            // Chi paga
+                            $pagamento = ($cam['pagamento'] ?? 'sposi') === 'cliente' ? 'cliente' : 'sposi';
+
                             // Crea prenotazione
                             $stmt = $db->prepare('INSERT INTO prenotazioni (camera_id, cliente_id, data_checkin, data_checkout, stato, pagamento, num_ospiti, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
                             $stmt->execute([
@@ -83,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $cam['data_checkin'],
                                 $cam['data_checkout'],
                                 'confermata',
-                                'sposi',
+                                $pagamento,
                                 (int)$cam['num_ospiti'],
                                 $prezzoTotale,
                                 $note ? 'Sposi: ' . $nomeSposi . ' | ' . $note : 'Sposi: ' . $nomeSposi,
@@ -285,12 +288,12 @@ $apiBase = BASE_URL . 'api/';
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Email Sposi *</label>
-                    <input type="email" name="email_sposi" id="emailSposi" required placeholder="email@esempio.com" value="<?= e($_POST['email_sposi'] ?? '') ?>">
+                    <label>Email Sposi</label>
+                    <input type="email" name="email_sposi" id="emailSposi" placeholder="email@esempio.com" value="<?= e($_POST['email_sposi'] ?? '') ?>">
                 </div>
                 <div class="form-group">
-                    <label>Telefono Sposi *</label>
-                    <input type="tel" name="telefono_sposi" id="telefonoSposi" required placeholder="+39 333 1234567" value="<?= e($_POST['telefono_sposi'] ?? '') ?>">
+                    <label>Telefono Sposi</label>
+                    <input type="tel" name="telefono_sposi" id="telefonoSposi" placeholder="+39 333 1234567" value="<?= e($_POST['telefono_sposi'] ?? '') ?>">
                 </div>
             </div>
         </div>
@@ -367,14 +370,23 @@ $apiBase = BASE_URL . 'api/';
                 <div id="camera-status-${idx}"></div>
             </div>
 
-            <div class="form-group ospiti-row">
-                <label>Numero ospiti nella camera *</label>
-                <select id="ospiti-${idx}" onchange="aggiornaPrezzo(${idx})">
-                    <option value="1">1 persona - &euro;80/notte</option>
-                    <option value="2" selected>2 persone - &euro;110/notte</option>
-                    <option value="3">3 persone - &euro;130/notte</option>
-                    <option value="4">4 persone - &euro;150/notte</option>
-                </select>
+            <div class="form-row ospiti-row">
+                <div class="form-group">
+                    <label>Numero ospiti *</label>
+                    <select id="ospiti-${idx}" onchange="aggiornaPrezzo(${idx})">
+                        <option value="1">1 persona - &euro;80/notte</option>
+                        <option value="2" selected>2 persone - &euro;110/notte</option>
+                        <option value="3">3 persone - &euro;130/notte</option>
+                        <option value="4">4 persone - &euro;150/notte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Chi paga? *</label>
+                    <select id="pagamento-${idx}">
+                        <option value="sposi">Pagano gli Sposi</option>
+                        <option value="cliente">Paga l'Ospite</option>
+                    </select>
+                </div>
             </div>
 
             <div class="guest-info">
@@ -382,36 +394,44 @@ $apiBase = BASE_URL . 'api/';
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome *</label>
-                        <input type="text" id="nome-${idx}" placeholder="Nome" required>
+                        <input type="text" id="nome-${idx}" placeholder="Nome">
                     </div>
                     <div class="form-group">
                         <label>Cognome *</label>
-                        <input type="text" id="cognome-${idx}" placeholder="Cognome" required>
+                        <input type="text" id="cognome-${idx}" placeholder="Cognome">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Email *</label>
-                        <input type="email" id="email-${idx}" placeholder="email@esempio.com" required>
+                        <label>Email</label>
+                        <input type="email" id="email-${idx}" placeholder="email@esempio.com">
                     </div>
                     <div class="form-group">
-                        <label>Telefono *</label>
-                        <input type="tel" id="telefono-${idx}" placeholder="+39 333 1234567" required>
+                        <label>Telefono</label>
+                        <input type="tel" id="telefono-${idx}" placeholder="+39 333 1234567">
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo documento</label>
+                        <select id="documento-tipo-${idx}">
+                            <option value="carta_identita">Carta d'Identita</option>
+                            <option value="passaporto">Passaporto</option>
+                            <option value="patente">Patente</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label>Numero documento</label>
                         <input type="text" id="documento-${idx}" placeholder="Facoltativo">
                     </div>
-                    <div class="form-group">
-                        <label>Foto documento</label>
-                        <div class="documento-upload">
-                            <input type="file" id="foto-${idx}" accept="image/*,.pdf" onchange="uploadFoto(${idx})">
-                        </div>
-                        <span id="foto-status-${idx}"></span>
-                        <input type="hidden" id="foto-file-${idx}" value="">
+                </div>
+                <div class="form-group">
+                    <label>Foto documento</label>
+                    <div class="documento-upload">
+                        <input type="file" id="foto-${idx}" accept="image/*,.pdf" onchange="uploadFoto(${idx})">
                     </div>
+                    <span id="foto-status-${idx}"></span>
+                    <input type="hidden" id="foto-file-${idx}" value="">
                 </div>
             </div>
         `;
@@ -589,19 +609,20 @@ $apiBase = BASE_URL . 'api/';
             const checkout = document.getElementById('checkout-' + idx).value;
             const cameraId = document.getElementById('select-camera-' + idx).value;
             const ospiti = document.getElementById('ospiti-' + idx).value;
+            const pagamento = document.getElementById('pagamento-' + idx).value;
             const nome = document.getElementById('nome-' + idx).value.trim();
             const cognome = document.getElementById('cognome-' + idx).value.trim();
             const email = document.getElementById('email-' + idx).value.trim();
             const telefono = document.getElementById('telefono-' + idx).value.trim();
+            const documentoTipo = document.getElementById('documento-tipo-' + idx).value;
             const documento = document.getElementById('documento-' + idx).value.trim();
             const fotoFile = document.getElementById('foto-file-' + idx).value;
 
-            if (!checkin || !checkout || !cameraId || !nome || !cognome || !email || !telefono) {
+            if (!checkin || !checkout || !cameraId || !nome || !cognome) {
                 valido = false;
                 return;
             }
 
-            // Prendere il testo della camera selezionata
             const selEl = document.getElementById('select-camera-' + idx);
             const cameraLabel = selEl.options[selEl.selectedIndex].textContent;
 
@@ -611,10 +632,12 @@ $apiBase = BASE_URL . 'api/';
                 camera_id: parseInt(cameraId),
                 camera_label: cameraLabel,
                 num_ospiti: parseInt(ospiti),
+                pagamento: pagamento,
                 nome: nome,
                 cognome: cognome,
                 email: email,
                 telefono: telefono,
+                documento_tipo: documentoTipo,
                 documento_numero: documento,
                 documento_foto: fotoFile
             });
@@ -622,7 +645,7 @@ $apiBase = BASE_URL . 'api/';
 
         if (!valido) {
             e.preventDefault();
-            alert('Compila tutti i campi obbligatori per ogni camera (date, camera, nome, cognome, email, telefono).');
+            alert('Compila tutti i campi obbligatori per ogni camera (date, camera, nome e cognome).');
             return;
         }
 
