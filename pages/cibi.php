@@ -144,45 +144,32 @@ if ($azione === 'lista'):
     <h1>Etichetta: <?= e($cibo['nome']) ?></h1>
     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="scaricaImmagine()">Scarica immagine</button>
-        <button class="btn btn-secondary" onclick="window.print()">Stampa (PC)</button>
+        <button class="btn btn-secondary" onclick="window.print()">Stampa</button>
         <a href="<?= BASE_URL ?>pages/cibi.php" class="btn btn-secondary">Torna alla lista</a>
     </div>
-</div>
-
-<div class="alert alert-info" style="font-size:0.85rem;">
-    Ottimizzato per <strong>Godex G500</strong> (203 DPI) - Etichette <strong>50mm x 90mm</strong>.
-    Da cellulare usa <strong>"Scarica immagine"</strong> per salvare l'etichetta.
 </div>
 
 <!-- Canvas nascosto per generare l'immagine -->
 <canvas id="etichettaCanvas" style="display:none;"></canvas>
 
-<!-- Anteprima visiva -->
 <div class="etichetta-preview" id="etichettaPreview">
-    <div class="etichetta-card" id="etichettaCard">
+    <div class="etichetta-card">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="150" height="150">
         </div>
-        <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
-        <div class="etichetta-grid">
-            <div class="etichetta-campo">
-                <span class="etichetta-label">Peso</span>
-                <span class="etichetta-valore"><?= e($cibo['peso']) ?></span>
+        <div class="etichetta-info">
+            <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
+            <div class="etichetta-dettagli">
+                <span><strong>Peso:</strong> <?= e($cibo['peso']) ?></span>
+                <span><strong>Cella:</strong> <?= e($cibo['cella']) ?></span>
             </div>
-            <div class="etichetta-campo">
-                <span class="etichetta-label">Cella</span>
-                <span class="etichetta-valore"><?= e($cibo['cella']) ?></span>
+            <div class="etichetta-dettagli">
+                <span><strong>Operatore:</strong> <?= e($cibo['operatore']) ?></span>
+                <span><strong>Data:</strong> <?= date('d/m/Y', strtotime($cibo['created_at'])) ?></span>
             </div>
-        </div>
-        <div class="etichetta-grid">
-            <div class="etichetta-campo">
-                <span class="etichetta-label">Operatore</span>
-                <span class="etichetta-valore etichetta-valore-sm"><?= e($cibo['operatore']) ?></span>
-            </div>
-            <div class="etichetta-campo">
-                <span class="etichetta-label">Data</span>
-                <span class="etichetta-valore etichetta-valore-sm"><?= date('d/m/Y', strtotime($cibo['created_at'])) ?></span>
-            </div>
+            <?php if ($cibo['descrizione']): ?>
+                <div class="etichetta-desc"><?= e($cibo['descrizione']) ?></div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -191,74 +178,48 @@ if ($azione === 'lista'):
     .etichetta-preview {
         display: flex;
         justify-content: center;
-        margin-top: 1.5rem;
+        margin-top: 2rem;
     }
     .etichetta-card {
-        width: 100mm;
-        height: 180mm;
         background: #fff;
         border: 2px solid #1e293b;
-        border-radius: 4px;
-        padding: 6mm;
+        border-radius: 12px;
+        padding: 1.5rem;
         display: flex;
-        flex-direction: column;
+        gap: 1.5rem;
         align-items: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        overflow: hidden;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .etichetta-qr { margin-bottom: 4mm; }
-    .etichetta-qr img { width: 56mm; height: 56mm; }
+    .etichetta-qr { flex-shrink: 0; }
+    .etichetta-qr img { border-radius: 8px; border: 1px solid #e2e8f0; }
+    .etichetta-info { flex: 1; }
     .etichetta-nome {
-        font-size: 16pt; font-weight: 900; color: #000; text-align: center;
-        width: 100%; border-bottom: 1.5px solid #000; padding-bottom: 2mm;
-        margin-bottom: 3mm; line-height: 1.2; word-break: break-word;
+        font-size: 1.4rem; font-weight: 800; color: #1e293b;
+        margin-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem;
     }
-    .etichetta-grid { display: flex; width: 100%; gap: 3mm; margin-bottom: 2mm; }
-    .etichetta-campo { flex: 1; text-align: center; }
-    .etichetta-label {
-        display: block; font-size: 6pt; font-weight: 700;
-        text-transform: uppercase; color: #666; letter-spacing: 0.5px;
+    .etichetta-dettagli {
+        display: flex; gap: 1rem; font-size: 0.9rem; color: #475569; margin-bottom: 0.3rem;
     }
-    .etichetta-valore { display: block; font-size: 12pt; font-weight: 800; color: #000; line-height: 1.3; }
-    .etichetta-valore-sm { font-size: 9pt; font-weight: 600; }
+    .etichetta-desc {
+        font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; font-style: italic;
+    }
 
     @media (max-width: 600px) {
-        .etichetta-card { width: 70mm; height: 126mm; padding: 4mm; }
-        .etichetta-qr img { width: 38mm; height: 38mm; }
-        .etichetta-nome { font-size: 12pt; }
+        .etichetta-card { flex-direction: column; text-align: center; }
+        .etichetta-dettagli { justify-content: center; }
     }
 
-    /* === STAMPA PC - Godex G500, 203 DPI, 50mm x 90mm === */
     @media print {
-        @page { size: 50mm 90mm; margin: 0; }
-        html, body { margin: 0 !important; padding: 0 !important; width: 50mm; height: 90mm; background: #fff !important; }
-        body > * { display: none !important; }
-        body > main { display: block !important; }
-        main > * { display: none !important; }
-        .etichetta-preview { display: flex !important; }
-        .navbar, .footer, .toolbar, .alert { display: none !important; }
-        .container { max-width: none !important; margin: 0 !important; padding: 0 !important; }
-        .etichetta-preview {
-            position: fixed; top: 0; left: 0; width: 50mm; height: 90mm;
-            margin: 0 !important; padding: 0 !important;
-        }
-        .etichetta-card {
-            width: 50mm !important; height: 90mm !important; border: none !important;
-            border-radius: 0 !important; box-shadow: none !important; padding: 2mm 3mm !important; margin: 0 !important;
-            justify-content: center !important;
-        }
-        .etichetta-qr { margin-bottom: 1.5mm !important; }
-        .etichetta-qr img { width: 26mm !important; height: 26mm !important; }
-        .etichetta-nome { font-size: 10pt !important; padding-bottom: 1mm !important; margin-bottom: 1.5mm !important; border-bottom: 0.8px solid #000 !important; }
-        .etichetta-grid { gap: 1.5mm !important; margin-bottom: 1mm !important; }
-        .etichetta-label { font-size: 5pt !important; }
-        .etichetta-valore { font-size: 8pt !important; }
-        .etichetta-valore-sm { font-size: 6.5pt !important; }
+        body * { visibility: hidden; }
+        .etichetta-preview, .etichetta-preview * { visibility: visible; }
+        .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
+        .etichetta-card { border: 2px solid #000; box-shadow: none; }
     }
 </style>
 
 <script>
-// Dati etichetta per il canvas
 var ETICHETTA = {
     nome: <?= json_encode($cibo['nome']) ?>,
     peso: <?= json_encode($cibo['peso']) ?>,
@@ -269,10 +230,8 @@ var ETICHETTA = {
 };
 
 function scaricaImmagine() {
-    // Godex G500: 203 DPI, etichetta 50mm x 90mm
-    // 50mm = 1.9685in * 203 = 399px, 90mm = 3.5433in * 203 = 719px
-    var W = 399;
-    var H = 719;
+    var W = 800;
+    var H = 400;
     var canvas = document.getElementById('etichettaCanvas');
     canvas.width = W;
     canvas.height = H;
@@ -282,98 +241,88 @@ function scaricaImmagine() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, W, H);
 
-    // Carica QR e disegna
+    // Bordo
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(4, 4, W - 8, H - 8);
+
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.onload = function() {
-        // Calcola altezza totale del contenuto per centrarlo verticalmente
-        ctx.font = 'bold 28px sans-serif';
-        var nomeLines = wrapText(ctx, ETICHETTA.nome, W - 30);
+        // QR a sinistra
+        var qrSize = 240;
+        var qrX = 40;
+        var qrY = (H - qrSize) / 2;
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        var qrSize = 224;
-        var contentH = qrSize + 14                    // QR + gap
-            + (nomeLines.length * 32)                 // nome
-            + 4 + 2 + 16                              // linea separatrice
-            + 14 + 22 + 24 + 32                       // peso/cella labels + values
-            + 14 + 20 + 18;                           // operatore/data labels + values
-        var startY = Math.max(20, (H - contentH) / 2);
+        // Info a destra
+        var textX = qrX + qrSize + 40;
+        var y = 60;
 
-        // QR centrato
-        var qrX = (W - qrSize) / 2;
-        ctx.drawImage(qrImg, qrX, startY, qrSize, qrSize);
-
-        var y = startY + qrSize + 14;
-
-        // Nome prodotto
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 28px sans-serif';
-        ctx.textAlign = 'center';
-
-        nomeLines.forEach(function(line) {
-            ctx.fillText(line, W / 2, y);
-            y += 32;
+        // Nome
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'left';
+        var lines = wrapText(ctx, ETICHETTA.nome, W - textX - 30);
+        lines.forEach(function(line) {
+            ctx.fillText(line, textX, y);
+            y += 38;
         });
 
-        // Linea separatrice
-        y += 4;
-        ctx.strokeStyle = '#000';
+        // Linea
+        y += 6;
+        ctx.strokeStyle = '#ccc';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(20, y);
-        ctx.lineTo(W - 20, y);
+        ctx.moveTo(textX, y);
+        ctx.lineTo(W - 30, y);
         ctx.stroke();
-        y += 16;
+        y += 24;
 
-        // Peso e Cella
-        var colL = W * 0.25;
-        var colR = W * 0.75;
-
-        ctx.fillStyle = '#888';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('PESO', colL, y);
-        ctx.fillText('CELLA', colR, y);
-        y += 22;
-
+        // Dettagli
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Peso: ', textX, y);
         ctx.fillStyle = '#000';
-        ctx.font = 'bold 24px sans-serif';
-        ctx.fillText(ETICHETTA.peso, colL, y);
-        ctx.fillText(ETICHETTA.cella, colR, y);
-        y += 32;
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.peso, textX + ctx.measureText('Peso: ').width, y);
 
-        // Operatore e Data
-        ctx.fillStyle = '#888';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('OPERATORE', colL, y);
-        ctx.fillText('DATA', colR, y);
-        y += 20;
-
+        var cellaX = textX + 200;
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Cella: ', cellaX, y);
         ctx.fillStyle = '#000';
-        ctx.font = '600 18px sans-serif';
-        ctx.fillText(ETICHETTA.operatore, colL, y);
-        ctx.fillText(ETICHETTA.data, colR, y);
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.cella, cellaX + ctx.measureText('Cella: ').width, y);
+        y += 34;
 
-        // Scarica
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Operatore: ', textX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.operatore, textX + ctx.measureText('Operatore: ').width, y);
+        y += 34;
+
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Data: ', textX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.data, textX + ctx.measureText('Data: ').width, y);
+
+        // Scarica/Condividi
         canvas.toBlob(function(blob) {
             var url = URL.createObjectURL(blob);
-
-            // Su mobile prova share API, altrimenti download
             if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
                 var file = new File([blob], 'etichetta-' + <?= json_encode($cibo['id']) ?> + '.png', {type: 'image/png'});
-                navigator.share({
-                    title: 'Etichetta: ' + ETICHETTA.nome,
-                    files: [file]
-                }).catch(function() {
-                    // Fallback download
-                    downloadBlob(url);
-                });
+                navigator.share({ title: 'Etichetta: ' + ETICHETTA.nome, files: [file] }).catch(function() { downloadBlob(url); });
             } else {
                 downloadBlob(url);
             }
         }, 'image/png');
     };
-    qrImg.onerror = function() {
-        alert('Errore nel caricamento del QR code. Riprova.');
-    };
+    qrImg.onerror = function() { alert('Errore nel caricamento del QR code. Riprova.'); };
     qrImg.src = ETICHETTA.qrUrl;
 }
 
@@ -393,12 +342,8 @@ function wrapText(ctx, text, maxWidth) {
     var line = '';
     for (var i = 0; i < words.length; i++) {
         var test = line + (line ? ' ' : '') + words[i];
-        if (ctx.measureText(test).width > maxWidth && line) {
-            lines.push(line);
-            line = words[i];
-        } else {
-            line = test;
-        }
+        if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = words[i]; }
+        else { line = test; }
     }
     if (line) lines.push(line);
     return lines;
