@@ -329,8 +329,10 @@ $apiBase = BASE_URL . 'api/';
     const API_BASE = <?= json_encode($apiBase) ?>;
     const UPLOAD_URL = API_BASE + 'upload-documento.php';
     const PREZZI = {1: 80, 2: 110, 3: 130, 4: 150};
+    const CAPACITA_TIPO = {singola: 1, doppia: 2, tripla: 3, quadrupla: 4, suite: 4};
     let cameraCounter = 0;
     let camereData = [];
+    let camereCaricate = {}; // idx -> array di camere dal server
 
     function aggiungiCamera() {
         cameraCounter++;
@@ -360,20 +362,10 @@ $apiBase = BASE_URL . 'api/';
                 </div>
             </div>
 
-            <div class="camera-select-row">
-                <div class="form-group">
-                    <label>Camera disponibile *</label>
-                    <select id="select-camera-${idx}" onchange="aggiornaPrezzo(${idx})" disabled>
-                        <option value="">-- Seleziona prima le date --</option>
-                    </select>
-                </div>
-                <div id="camera-status-${idx}"></div>
-            </div>
-
             <div class="form-row ospiti-row">
                 <div class="form-group">
                     <label>Numero ospiti *</label>
-                    <select id="ospiti-${idx}" onchange="aggiornaPrezzo(${idx})">
+                    <select id="ospiti-${idx}" onchange="filtraCamerePerOspiti(${idx})">
                         <option value="1">1 persona - &euro;80/notte</option>
                         <option value="2" selected>2 persone - &euro;110/notte</option>
                         <option value="3">3 persone - &euro;130/notte</option>
@@ -387,6 +379,16 @@ $apiBase = BASE_URL . 'api/';
                         <option value="cliente">Paga l'Ospite</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="camera-select-row">
+                <div class="form-group">
+                    <label>Camera disponibile *</label>
+                    <select id="select-camera-${idx}" onchange="aggiornaPrezzo(${idx})" disabled>
+                        <option value="">-- Seleziona prima le date e il numero ospiti --</option>
+                    </select>
+                </div>
+                <div id="camera-status-${idx}"></div>
             </div>
 
             <div class="guest-info">
@@ -470,6 +472,7 @@ $apiBase = BASE_URL . 'api/';
             sel.innerHTML = '<option value="">-- Seleziona date valide --</option>';
             sel.disabled = true;
             status.innerHTML = '';
+            camereCaricate[idx] = [];
             aggiornaPrezzo(idx);
             return;
         }
@@ -481,30 +484,56 @@ $apiBase = BASE_URL . 'api/';
             const resp = await fetch(API_BASE + 'camere-disponibili.php?checkin=' + checkin + '&checkout=' + checkout);
             const data = await resp.json();
             status.innerHTML = '';
+            camereCaricate[idx] = data.camere || [];
+            filtraCamerePerOspiti(idx);
+        } catch(e) {
+            status.innerHTML = '<div class="no-camere">Errore nel caricamento. Riprova.</div>';
+            camereCaricate[idx] = [];
+        }
 
-            // Filtra le camere gia selezionate in altri blocchi
-            const selezionate = getAltreSelezionate(idx);
-            const disponibili = (data.camere || []).filter(c => !selezionate.includes(c.id));
+        aggiornaPrezzo(idx);
+    }
 
-            if (disponibili.length === 0) {
+    function filtraCamerePerOspiti(idx) {
+        const sel = document.getElementById('select-camera-' + idx);
+        const status = document.getElementById('camera-status-' + idx);
+        const ospiti = parseInt(document.getElementById('ospiti-' + idx).value) || 2;
+        const tutteCamere = camereCaricate[idx] || [];
+
+        if (tutteCamere.length === 0) {
+            if (document.getElementById('checkin-' + idx).value && document.getElementById('checkout-' + idx).value) {
                 sel.innerHTML = '<option value="">Nessuna camera disponibile</option>';
                 sel.disabled = true;
                 status.innerHTML = '<div class="no-camere">Nessuna camera disponibile per queste date.</div>';
-            } else {
-                sel.innerHTML = '<option value="">-- Scegli camera --</option>';
-                disponibili.forEach(function(cam) {
-                    const opt = document.createElement('option');
-                    opt.value = cam.id;
-                    opt.textContent = '#' + cam.numero + ' - ' + cam.tipo.charAt(0).toUpperCase() + cam.tipo.slice(1) + ' (Piano ' + cam.piano + ')';
-                    if (cam.descrizione) opt.textContent += ' - ' + cam.descrizione;
-                    sel.appendChild(opt);
-                });
-                sel.disabled = false;
             }
-        } catch(e) {
-            status.innerHTML = '<div class="no-camere">Errore nel caricamento. Riprova.</div>';
+            aggiornaPrezzo(idx);
+            return;
         }
 
+        // Filtra per capacita e per camere gia selezionate
+        const selezionate = getAltreSelezionate(idx);
+        const disponibili = tutteCamere.filter(function(c) {
+            if (selezionate.includes(c.id)) return false;
+            const capacita = CAPACITA_TIPO[c.tipo] || 2;
+            return capacita >= ospiti;
+        });
+
+        status.innerHTML = '';
+        if (disponibili.length === 0) {
+            sel.innerHTML = '<option value="">Nessuna camera per ' + ospiti + ' ospiti</option>';
+            sel.disabled = true;
+            status.innerHTML = '<div class="no-camere">Nessuna camera disponibile per ' + ospiti + ' persone in queste date.</div>';
+        } else {
+            sel.innerHTML = '<option value="">-- Scegli camera --</option>';
+            disponibili.forEach(function(cam) {
+                const opt = document.createElement('option');
+                opt.value = cam.id;
+                opt.textContent = '#' + cam.numero + ' - ' + cam.tipo.charAt(0).toUpperCase() + cam.tipo.slice(1) + ' (Piano ' + cam.piano + ')';
+                if (cam.descrizione) opt.textContent += ' - ' + cam.descrizione;
+                sel.appendChild(opt);
+            });
+            sel.disabled = false;
+        }
         aggiornaPrezzo(idx);
     }
 
