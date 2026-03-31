@@ -170,22 +170,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php elseif ($azione === 'nuova' || $azione === 'modifica'):
     $prenotazione = $azione === 'modifica' ? getPrenotazione($id) : null;
     $cliente = $prenotazione ? getCliente($prenotazione['cliente_id']) : null;
-    $camereDisponibili = getCamere();
 
     // Valori pre-compilati (dalla griglia o dalla prenotazione esistente)
     $valCameraId = $prenotazione['camera_id'] ?? $preCameraId;
     $valCheckin = $prenotazione['data_checkin'] ?? $preCheckin;
     $valCheckout = $prenotazione['data_checkout'] ?? '';
+    $valOspiti = $prenotazione['num_ospiti'] ?? 2;
 ?>
     <h2><?= $prenotazione ? 'Modifica Prenotazione #' . $prenotazione['id'] : 'Nuova Prenotazione' ?></h2>
 
-    <?php if (!$prenotazione): ?>
     <div class="alert alert-info">
-        La disponibilita della camera viene verificata automaticamente al salvataggio. Puoi controllare la <a href="<?= BASE_URL ?>pages/calendario.php">griglia camere</a> per una visione d'insieme.
+        Seleziona date e numero ospiti per vedere le camere disponibili. Prezzo: 1 pers. &euro;80, 2 pers. &euro;110, 3 pers. &euro;130, 4 pers. &euro;150 a notte.
     </div>
-    <?php endif; ?>
 
-    <form method="post" class="form">
+    <form method="post" class="form" id="formPrenotazione">
         <input type="hidden" name="azione" value="salva">
         <?php if ($prenotazione): ?>
             <input type="hidden" name="id" value="<?= $prenotazione['id'] ?>">
@@ -194,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <fieldset>
-            <legend>Dati Cliente (tutti obbligatori)</legend>
+            <legend>Dati Cliente</legend>
             <div class="form-row">
                 <div class="form-group">
                     <label for="cliente_nome">Nome *</label>
@@ -233,36 +231,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <fieldset>
             <legend>Dati Prenotazione</legend>
-            <div class="form-group">
-                <label for="camera_id">Camera *</label>
-                <select id="camera_id" name="camera_id" required>
-                    <option value="">-- Seleziona Camera --</option>
-                    <?php foreach ($camereDisponibili as $cam): ?>
-                        <option value="<?= $cam['id'] ?>" <?= $valCameraId == $cam['id'] ? 'selected' : '' ?>>
-                            #<?= e($cam['numero']) ?> - <?= ucfirst($cam['tipo']) ?> (Piano <?= $cam['piano'] ?>) - &euro;<?= number_format($cam['prezzo_notte'], 2, ',', '.') ?>/notte
-                            <?= $cam['stato'] !== 'disponibile' ? ' [' . strtoupper($cam['stato']) . ']' : '' ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="data_checkin">Data Check-in *</label>
-                    <input type="date" id="data_checkin" name="data_checkin" value="<?= e($valCheckin) ?>" required>
+                    <input type="date" id="data_checkin" name="data_checkin" value="<?= e($valCheckin) ?>" required onchange="caricaCamere()">
                 </div>
                 <div class="form-group">
                     <label for="data_checkout">Data Check-out *</label>
-                    <input type="date" id="data_checkout" name="data_checkout" value="<?= e($valCheckout) ?>" required>
+                    <input type="date" id="data_checkout" name="data_checkout" value="<?= e($valCheckout) ?>" required onchange="caricaCamere()">
                 </div>
             </div>
-
-            <div id="disponibilita-feedback"></div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="num_ospiti">Numero Ospiti *</label>
-                    <input type="number" id="num_ospiti" name="num_ospiti" value="<?= $prenotazione['num_ospiti'] ?? 1 ?>" min="1" max="10" required>
+                    <select id="num_ospiti" name="num_ospiti" required onchange="filtraCamere()">
+                        <option value="1" <?= $valOspiti == 1 ? 'selected' : '' ?>>1 persona - &euro;80/notte</option>
+                        <option value="2" <?= $valOspiti == 2 ? 'selected' : '' ?>>2 persone - &euro;110/notte</option>
+                        <option value="3" <?= $valOspiti == 3 ? 'selected' : '' ?>>3 persone - &euro;130/notte</option>
+                        <option value="4" <?= $valOspiti == 4 ? 'selected' : '' ?>>4 persone - &euro;150/notte</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="pagamento">Chi paga? *</label>
@@ -274,15 +263,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-group">
+                <label for="camera_id">Camera disponibile *</label>
+                <select id="camera_id" name="camera_id" required disabled>
+                    <option value="">-- Seleziona prima date e numero ospiti --</option>
+                </select>
+            </div>
+
+            <div id="disponibilita-feedback"></div>
+            <div id="prezzo-preview" style="display:none; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff; border-radius:8px; padding:0.8rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+                <span>Totale stimato</span>
+                <strong id="prezzo-totale" style="font-size:1.3rem;"></strong>
+            </div>
+
+            <div class="form-group">
                 <label for="note">Note</label>
                 <textarea id="note" name="note" rows="3"><?= e($prenotazione['note'] ?? '') ?></textarea>
             </div>
         </fieldset>
 
-        <button type="submit" class="btn btn-primary">Salva Prenotazione</button>
+        <button type="submit" class="btn btn-primary" id="btnSalva">Salva Prenotazione</button>
         <a href="<?= BASE_URL ?>pages/prenotazioni.php" class="btn btn-secondary">Annulla</a>
         <a href="<?= BASE_URL ?>pages/calendario.php" class="btn btn-info">Torna alla Griglia</a>
     </form>
+
+    <script>
+    const API_BASE = <?= json_encode(BASE_URL . 'api/') ?>;
+    const PREZZI = {1: 80, 2: 110, 3: 130, 4: 150};
+    const CAPACITA_TIPO = {singola: 1, doppia: 2, tripla: 3, quadrupla: 4, suite: 4};
+    const PRESELECT_CAMERA = <?= json_encode($valCameraId) ?>;
+    let tutteCamereDisponibili = [];
+
+    async function caricaCamere() {
+        const checkin = document.getElementById('data_checkin').value;
+        const checkout = document.getElementById('data_checkout').value;
+        const sel = document.getElementById('camera_id');
+        const feedback = document.getElementById('disponibilita-feedback');
+
+        if (!checkin || !checkout || checkin >= checkout) {
+            sel.innerHTML = '<option value="">-- Seleziona date valide --</option>';
+            sel.disabled = true;
+            feedback.innerHTML = '';
+            tutteCamereDisponibili = [];
+            aggiornaPrezzo();
+            return;
+        }
+
+        sel.disabled = true;
+        feedback.innerHTML = '<div class="alert alert-info">Caricamento camere disponibili...</div>';
+
+        try {
+            const resp = await fetch(API_BASE + 'camere-disponibili.php?checkin=' + checkin + '&checkout=' + checkout);
+            const data = await resp.json();
+            feedback.innerHTML = '';
+            tutteCamereDisponibili = data.camere || [];
+            filtraCamere();
+        } catch(e) {
+            feedback.innerHTML = '<div class="alert alert-error">Errore nel caricamento camere.</div>';
+            tutteCamereDisponibili = [];
+        }
+    }
+
+    function filtraCamere() {
+        const sel = document.getElementById('camera_id');
+        const feedback = document.getElementById('disponibilita-feedback');
+        const ospiti = parseInt(document.getElementById('num_ospiti').value) || 2;
+
+        const disponibili = tutteCamereDisponibili.filter(function(c) {
+            const capacita = CAPACITA_TIPO[c.tipo] || 2;
+            return capacita >= ospiti;
+        });
+
+        if (tutteCamereDisponibili.length === 0 && document.getElementById('data_checkin').value && document.getElementById('data_checkout').value) {
+            sel.innerHTML = '<option value="">Nessuna camera disponibile</option>';
+            sel.disabled = true;
+            feedback.innerHTML = '<div class="alert alert-error">Nessuna camera disponibile per queste date.</div>';
+        } else if (disponibili.length === 0 && tutteCamereDisponibili.length > 0) {
+            sel.innerHTML = '<option value="">Nessuna camera per ' + ospiti + ' ospiti</option>';
+            sel.disabled = true;
+            feedback.innerHTML = '<div class="alert alert-error">Nessuna camera disponibile per ' + ospiti + ' persone in queste date.</div>';
+        } else if (disponibili.length > 0) {
+            sel.innerHTML = '<option value="">-- Scegli camera --</option>';
+            disponibili.forEach(function(cam) {
+                const opt = document.createElement('option');
+                opt.value = cam.id;
+                opt.textContent = '#' + cam.numero + ' - ' + cam.tipo.charAt(0).toUpperCase() + cam.tipo.slice(1) + ' (Piano ' + cam.piano + ')';
+                if (cam.descrizione) opt.textContent += ' - ' + cam.descrizione;
+                if (PRESELECT_CAMERA && cam.id == PRESELECT_CAMERA) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            sel.disabled = false;
+            feedback.innerHTML = '';
+        }
+
+        aggiornaPrezzo();
+    }
+
+    function aggiornaPrezzo() {
+        const checkin = document.getElementById('data_checkin').value;
+        const checkout = document.getElementById('data_checkout').value;
+        const ospiti = parseInt(document.getElementById('num_ospiti').value) || 2;
+        const preview = document.getElementById('prezzo-preview');
+        const totaleEl = document.getElementById('prezzo-totale');
+
+        if (checkin && checkout && checkout > checkin) {
+            const notti = Math.round((new Date(checkout) - new Date(checkin)) / 86400000);
+            const prezzoNotte = PREZZI[ospiti] || 0;
+            const totale = prezzoNotte * notti;
+            totaleEl.textContent = '\u20AC' + totale + ' (' + notti + ' notti x \u20AC' + prezzoNotte + ')';
+            preview.style.display = 'flex';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // Carica camere se le date sono gia precompilate (modifica)
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('data_checkin').value && document.getElementById('data_checkout').value) {
+            caricaCamere();
+        }
+        document.getElementById('camera_id').addEventListener('change', aggiornaPrezzo);
+    });
+    </script>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -118,8 +118,7 @@ function salvaPrenotazione(array $data): bool {
     $checkout = new DateTime($data['data_checkout']);
     $notti = $checkin->diff($checkout)->days;
 
-    $camera = getCamera((int)$data['camera_id']);
-    $prezzoTotale = $camera ? $camera['prezzo_notte'] * $notti : 0;
+    $prezzoTotale = getPrezzoPerOspiti((int)$data['num_ospiti']) * $notti;
 
     if (!empty($data['id'])) {
         $stmt = $db->prepare('UPDATE prenotazioni SET camera_id=?, cliente_id=?, data_checkin=?, data_checkout=?, stato=?, pagamento=?, num_ospiti=?, prezzo_totale=?, note=? WHERE id=?');
