@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clienteEmail = trim($_POST['cliente_email']);
         $clienteTelefono = trim($_POST['cliente_telefono']);
 
-        if (!$clienteNome || !$clienteCognome || !$clienteEmail || !$clienteTelefono) {
-            setFlash('error', 'Nome, cognome, email e telefono del cliente sono obbligatori.');
+        if (!$clienteNome || !$clienteCognome || !$clienteTelefono) {
+            setFlash('error', 'Nome, cognome e telefono del cliente sono obbligatori.');
             redirect(BASE_URL . 'pages/prenotazioni.php?azione=' . ($azione === 'modifica' ? "modifica&id=" . ($_POST['id'] ?? '') : 'nuova'));
         }
 
@@ -205,8 +205,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="cliente_email">Email *</label>
-                    <input type="email" id="cliente_email" name="cliente_email" value="<?= e($cliente['email'] ?? '') ?>" required>
+                    <label for="cliente_email">Email</label>
+                    <input type="email" id="cliente_email" name="cliente_email" value="<?= e($cliente['email'] ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label for="cliente_telefono">Telefono *</label>
