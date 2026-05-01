@@ -22,7 +22,8 @@ $camere = getCamere();
 $mappaPrenotazioni = [];
 foreach ($prenotazioni as $p) {
     $inizio = max(strtotime($p['data_checkin']), strtotime("$anno-$mese-01"));
-    $fine = min(strtotime($p['data_checkout']), strtotime("$anno-$mese-$giorniMese"));
+    $fineDelMese = strtotime("$anno-$mese-$giorniMese") + 86400;
+    $fine = min(strtotime($p['data_checkout']), $fineDelMese);
     for ($d = $inizio; $d < $fine; $d += 86400) {
         $giorno = (int)date('j', $d);
         $mappaPrenotazioni[$p['camera_id']][$giorno] = $p;
