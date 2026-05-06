@@ -291,6 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const PREZZI = {1: 80, 2: 110, 3: 130, 4: 150};
     const CAPACITA_TIPO = {singola: 1, doppia: 2, tripla: 3, quadrupla: 4, suite: 4};
     const PRESELECT_CAMERA = <?= json_encode($valCameraId) ?>;
+    const ESCLUDI_PRENOTAZIONE = <?= json_encode($prenotazione['id'] ?? null) ?>;
     let tutteCamereDisponibili = [];
 
     async function caricaCamere() {
@@ -312,7 +313,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         feedback.innerHTML = '<div class="alert alert-info">Caricamento camere disponibili...</div>';
 
         try {
-            const resp = await fetch(API_BASE + 'camere-disponibili.php?checkin=' + checkin + '&checkout=' + checkout);
+            let url = API_BASE + 'camere-disponibili.php?checkin=' + checkin + '&checkout=' + checkout;
+            if (ESCLUDI_PRENOTAZIONE) url += '&escludi=' + ESCLUDI_PRENOTAZIONE;
+            const resp = await fetch(url);
             const data = await resp.json();
             feedback.innerHTML = '';
             tutteCamereDisponibili = data.camere || [];

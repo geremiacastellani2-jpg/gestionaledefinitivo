@@ -225,17 +225,24 @@ function getPrezzoPerOspiti(int $numOspiti): float {
     };
 }
 
-function getCamereDisponibili(string $checkin, string $checkout): array {
+function getCamereDisponibili(string $checkin, string $checkout, ?int $escludiPrenotazioneId = null): array {
     $db = getDB();
-    $stmt = $db->prepare("SELECT c.* FROM camere c
+    $sql = "SELECT c.* FROM camere c
         WHERE c.stato = 'disponibile'
         AND c.id NOT IN (
             SELECT p.camera_id FROM prenotazioni p
             WHERE p.stato != 'cancellata'
-            AND p.data_checkin < ? AND p.data_checkout > ?
-        )
-        ORDER BY c.numero");
-    $stmt->execute([$checkout, $checkin]);
+            AND p.data_checkin < ? AND p.data_checkout > ?";
+    $params = [$checkout, $checkin];
+
+    if ($escludiPrenotazioneId) {
+        $sql .= ' AND p.id != ?';
+        $params[] = $escludiPrenotazioneId;
+    }
+
+    $sql .= ") ORDER BY c.numero";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
     return $stmt->fetchAll();
 }
 

@@ -11,7 +11,8 @@ if (!$checkin || !$checkout || $checkin >= $checkout) {
     exit;
 }
 
-$camere = getCamereDisponibili($checkin, $checkout);
+$escludiId = !empty($_GET['escludi']) ? (int)$_GET['escludi'] : null;
+$camere = getCamereDisponibili($checkin, $checkout, $escludiId);
 
 $risultato = array_map(function($c) {
     return [
