@@ -293,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const PRESELECT_CAMERA = <?= json_encode($valCameraId) ?>;
     const ESCLUDI_PRENOTAZIONE = <?= json_encode($prenotazione['id'] ?? null) ?>;
     let tutteCamereDisponibili = [];
+    let primoCaricamento = true;
 
     async function caricaCamere() {
         const checkin = document.getElementById('data_checkin').value;
@@ -346,7 +347,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             feedback.innerHTML = '<div class="alert alert-error">Nessuna camera disponibile per ' + ospiti + ' persone in queste date.</div>';
         } else if (disponibili.length > 0) {
             sel.innerHTML = '<option value="">-- Scegli camera --</option>';
-            disponibili.forEach(function(cam) {
+            // Al primo caricamento in modifica, includi la camera attuale anche se filtrata
+            let listaFinale = disponibili;
+            if (primoCaricamento && PRESELECT_CAMERA) {
+                const giaNellaLista = disponibili.some(function(c) { return c.id == PRESELECT_CAMERA; });
+                if (!giaNellaLista) {
+                    const cameraSalvata = tutteCamereDisponibili.find(function(c) { return c.id == PRESELECT_CAMERA; });
+                    if (cameraSalvata) listaFinale = [cameraSalvata].concat(disponibili);
+                }
+            }
+            listaFinale.forEach(function(cam) {
                 const opt = document.createElement('option');
                 opt.value = cam.id;
                 opt.textContent = '#' + cam.numero + ' - ' + cam.tipo.charAt(0).toUpperCase() + cam.tipo.slice(1) + ' (Piano ' + cam.piano + ')';
@@ -356,6 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
             sel.disabled = false;
             feedback.innerHTML = '';
+            primoCaricamento = false;
         }
 
         aggiornaPrezzo();
