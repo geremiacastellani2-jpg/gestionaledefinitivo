@@ -49,6 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect(BASE_URL . 'pages/prenotazioni.php?azione=' . ($prenotazioneId ? "modifica&id=$prenotazioneId" : 'nuova'));
         }
 
+        // Aggiungi nomi ospiti extra alle note
+        $noteFinali = trim($_POST['note']);
+        $altriOspiti = json_decode($_POST['altri_ospiti_json'] ?? '[]', true);
+        if (!empty($altriOspiti)) {
+            $nomiExtra = [];
+            foreach ($altriOspiti as $ao) {
+                if (!empty($ao['nome']) && !empty($ao['cognome'])) {
+                    $nomiExtra[] = $ao['nome'] . ' ' . $ao['cognome'];
+                }
+            }
+            if ($nomiExtra) {
+                $noteFinali = 'Altri ospiti: ' . implode(', ', $nomiExtra) . ($noteFinali ? ' | ' . $noteFinali : '');
+            }
+        }
+
         $datiPrenotazione = [
             'id' => $_POST['id'] ?? '',
             'camera_id' => $cameraId,
@@ -58,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'stato' => $_POST['stato'] ?? 'confermata',
             'pagamento' => $_POST['pagamento'] ?? 'cliente',
             'num_ospiti' => (int)$_POST['num_ospiti'],
-            'note' => trim($_POST['note']),
+            'note' => $noteFinali,
         ];
 
         if (salvaPrenotazione($datiPrenotazione)) {
@@ -246,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-row">
                 <div class="form-group">
                     <label for="num_ospiti">Numero Ospiti *</label>
-                    <select id="num_ospiti" name="num_ospiti" required onchange="filtraCamere()">
+                    <select id="num_ospiti" name="num_ospiti" required onchange="filtraCamere(); aggiornaOspiti()">
                         <option value="1" <?= $valOspiti == 1 ? 'selected' : '' ?>>1 persona - &euro;80/notte</option>
                         <option value="2" <?= $valOspiti == 2 ? 'selected' : '' ?>>2 persone - &euro;110/notte</option>
                         <option value="3" <?= $valOspiti == 3 ? 'selected' : '' ?>>3 persone - &euro;130/notte</option>
@@ -274,6 +289,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <span>Totale stimato</span>
                 <strong id="prezzo-totale" style="font-size:1.3rem;"></strong>
             </div>
+
+            <div id="extra-ospiti-container"></div>
+            <input type="hidden" name="altri_ospiti_json" id="altriOspitiJson" value="[]">
 
             <div class="form-group">
                 <label for="note">Note</label>
@@ -390,12 +408,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Carica camere se le date sono gia precompilate (modifica)
+    function aggiornaOspiti() {
+        var numOspiti = parseInt(document.getElementById('num_ospiti').value) || 1;
+        var container = document.getElementById('extra-ospiti-container');
+        container.innerHTML = '';
+        for (var i = 2; i <= numOspiti; i++) {
+            container.innerHTML += '<fieldset style="margin-bottom:0.5rem;"><legend>Ospite ' + i + '</legend>' +
+                '<div class="form-row">' +
+                '<div class="form-group"><label>Nome *</label>' +
+                '<input type="text" id="ospite-nome-' + i + '" placeholder="Nome" required></div>' +
+                '<div class="form-group"><label>Cognome *</label>' +
+                '<input type="text" id="ospite-cognome-' + i + '" placeholder="Cognome" required></div>' +
+                '</div></fieldset>';
+        }
+    }
+
+    document.getElementById('formPrenotazione').addEventListener('submit', function() {
+        var numOspiti = parseInt(document.getElementById('num_ospiti').value) || 1;
+        var ospiti = [];
+        for (var i = 2; i <= numOspiti; i++) {
+            var n = document.getElementById('ospite-nome-' + i);
+            var c = document.getElementById('ospite-cognome-' + i);
+            if (n && c) ospiti.push({nome: n.value.trim(), cognome: c.value.trim()});
+        }
+        document.getElementById('altriOspitiJson').value = JSON.stringify(ospiti);
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('data_checkin').value && document.getElementById('data_checkout').value) {
             caricaCamere();
         }
         document.getElementById('camera_id').addEventListener('change', aggiornaPrezzo);
+        aggiornaOspiti();
     });
     </script>
 <?php endif; ?>

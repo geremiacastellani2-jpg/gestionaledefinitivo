@@ -78,6 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Chi paga
                             $pagamento = ($cam['pagamento'] ?? 'sposi') === 'cliente' ? 'cliente' : 'sposi';
 
+                            // Note con ospiti extra
+                            $notePren = 'Sposi: ' . $nomeSposi;
+                            if (!empty($cam['altri_ospiti'])) {
+                                $nomiExtra = [];
+                                foreach ($cam['altri_ospiti'] as $ao) {
+                                    $nomiExtra[] = $ao['nome'] . ' ' . $ao['cognome'];
+                                }
+                                $notePren .= ' | Altri ospiti: ' . implode(', ', $nomiExtra);
+                            }
+                            if ($note) $notePren .= ' | ' . $note;
+
                             // Crea prenotazione
                             $stmt = $db->prepare('INSERT INTO prenotazioni (camera_id, cliente_id, data_checkin, data_checkout, stato, pagamento, num_ospiti, prezzo_totale, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
                             $stmt->execute([
@@ -89,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $pagamento,
                                 (int)$cam['num_ospiti'],
                                 $prezzoTotale,
-                                $note ? 'Sposi: ' . $nomeSposi . ' | ' . $note : 'Sposi: ' . $nomeSposi,
+                                $notePren,
                             ]);
                         }
 
@@ -365,7 +376,7 @@ $apiBase = BASE_URL . 'api/';
             <div class="form-row ospiti-row">
                 <div class="form-group">
                     <label>Numero ospiti *</label>
-                    <select id="ospiti-${idx}" onchange="filtraCamerePerOspiti(${idx})">
+                    <select id="ospiti-${idx}" onchange="filtraCamerePerOspiti(${idx}); aggiornaOspiti(${idx})">
                         <option value="1">1 persona - &euro;80/notte</option>
                         <option value="2" selected>2 persone - &euro;110/notte</option>
                         <option value="3">3 persone - &euro;130/notte</option>
@@ -392,7 +403,7 @@ $apiBase = BASE_URL . 'api/';
             </div>
 
             <div class="guest-info">
-                <h5>Dati dell'ospite</h5>
+                <h5>Ospite 1 (riferimento)</h5>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome *</label>
@@ -436,11 +447,29 @@ $apiBase = BASE_URL . 'api/';
                     <input type="hidden" id="foto-file-${idx}" value="">
                 </div>
             </div>
+            <div id="extra-ospiti-${idx}"></div>
         `;
 
         document.getElementById('listaCamere').appendChild(block);
+        aggiornaOspiti(idx);
         rinumeraCamere();
         calcolaTotale();
+    }
+
+    function aggiornaOspiti(idx) {
+        var numOspiti = parseInt(document.getElementById('ospiti-' + idx).value) || 1;
+        var container = document.getElementById('extra-ospiti-' + idx);
+        container.innerHTML = '';
+        for (var i = 2; i <= numOspiti; i++) {
+            container.innerHTML += '<div class="guest-info" style="margin-top:0.5rem;">' +
+                '<h5>Ospite ' + i + '</h5>' +
+                '<div class="form-row">' +
+                    '<div class="form-group"><label>Nome *</label>' +
+                    '<input type="text" id="ospite-nome-' + idx + '-' + i + '" placeholder="Nome"></div>' +
+                    '<div class="form-group"><label>Cognome *</label>' +
+                    '<input type="text" id="ospite-cognome-' + idx + '-' + i + '" placeholder="Cognome"></div>' +
+                '</div></div>';
+        }
     }
 
     function rimuoviCamera(idx) {
@@ -652,6 +681,20 @@ $apiBase = BASE_URL . 'api/';
                 return;
             }
 
+            // Raccolta ospiti extra
+            var numOspiti = parseInt(ospiti);
+            var altriOspiti = [];
+            for (var i = 2; i <= numOspiti; i++) {
+                var oNome = document.getElementById('ospite-nome-' + idx + '-' + i);
+                var oCognome = document.getElementById('ospite-cognome-' + idx + '-' + i);
+                if (oNome && oCognome) {
+                    var n = oNome.value.trim();
+                    var c = oCognome.value.trim();
+                    if (!n || !c) { valido = false; return; }
+                    altriOspiti.push({nome: n, cognome: c});
+                }
+            }
+
             const selEl = document.getElementById('select-camera-' + idx);
             const cameraLabel = selEl.options[selEl.selectedIndex].textContent;
 
@@ -660,7 +703,7 @@ $apiBase = BASE_URL . 'api/';
                 data_checkout: checkout,
                 camera_id: parseInt(cameraId),
                 camera_label: cameraLabel,
-                num_ospiti: parseInt(ospiti),
+                num_ospiti: numOspiti,
                 pagamento: pagamento,
                 nome: nome,
                 cognome: cognome,
@@ -668,7 +711,8 @@ $apiBase = BASE_URL . 'api/';
                 telefono: telefono,
                 documento_tipo: documentoTipo,
                 documento_numero: documento,
-                documento_foto: fotoFile
+                documento_foto: fotoFile,
+                altri_ospiti: altriOspiti
             });
         });
 
