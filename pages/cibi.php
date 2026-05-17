@@ -174,7 +174,7 @@ if ($azione === 'lista'):
 <div class="etichetta-preview" id="etichettaPreview">
     <div class="etichetta-card">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="80" height="80">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="90" height="90">
         </div>
         <div class="etichetta-info">
             <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
@@ -203,31 +203,27 @@ if ($azione === 'lista'):
         background: #fff;
         border: 2px solid #1e293b;
         border-radius: 8px;
-        padding: 0.6rem 0.8rem;
+        padding: 0.8rem;
         display: flex;
-        gap: 0.7rem;
+        flex-direction: column;
         align-items: center;
-        max-width: 280px;
+        gap: 0.5rem;
+        max-width: 180px;
         width: 100%;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .etichetta-qr { flex-shrink: 0; }
     .etichetta-qr img { border-radius: 4px; border: 1px solid #e2e8f0; }
-    .etichetta-info { flex: 1; }
+    .etichetta-info { text-align: center; width: 100%; }
     .etichetta-nome {
-        font-size: 0.85rem; font-weight: 800; color: #1e293b;
+        font-size: 0.8rem; font-weight: 800; color: #1e293b;
         margin-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;
     }
     .etichetta-dettagli {
-        display: flex; gap: 0.5rem; font-size: 0.6rem; color: #475569; margin-bottom: 0.15rem;
+        display: flex; justify-content: center; gap: 0.4rem; font-size: 0.55rem; color: #475569; margin-bottom: 0.15rem;
     }
     .etichetta-desc {
-        font-size: 0.55rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
-    }
-
-    @media (max-width: 600px) {
-        .etichetta-card { flex-direction: column; text-align: center; }
-        .etichetta-dettagli { justify-content: center; }
+        font-size: 0.5rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
     }
 
     @media print {
@@ -236,11 +232,10 @@ if ($azione === 'lista'):
         .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
         .etichetta-card {
             border: 2px solid #000; box-shadow: none;
-            flex-direction: row !important; text-align: left !important;
-            max-width: 280px;
+            flex-direction: column !important;
+            max-width: 180px;
             -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
-        .etichetta-dettagli { justify-content: flex-start !important; }
     }
 </style>
 
@@ -256,15 +251,12 @@ var ETICHETTA = {
 
 function scaricaImmagine() {
     var scale = 2;
-    var W = 800 * scale;
-    var H = 400 * scale;
+    var w = 400, h = 700;
     var canvas = document.getElementById('etichettaCanvas');
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = w * scale;
+    canvas.height = h * scale;
     var ctx = canvas.getContext('2d');
     ctx.scale(scale, scale);
-
-    var w = 800, h = 400;
 
     // Sfondo bianco
     ctx.fillStyle = '#fff';
@@ -278,67 +270,46 @@ function scaricaImmagine() {
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.onload = function() {
-        // QR a sinistra
-        var qrSize = 240;
-        var qrX = 40;
-        var qrY = (h - qrSize) / 2;
+        // QR in alto centrato
+        var qrSize = 220;
+        var qrX = (w - qrSize) / 2;
+        var qrY = 30;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        // Info a destra
-        var textX = qrX + qrSize + 40;
-        var y = 60;
+        // Info sotto
+        var y = qrY + qrSize + 30;
+        ctx.textAlign = 'center';
+        var centerX = w / 2;
 
         // Nome
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 32px sans-serif';
-        ctx.textAlign = 'left';
-        var lines = wrapText(ctx, ETICHETTA.nome, w - textX - 30);
+        ctx.font = 'bold 28px sans-serif';
+        var lines = wrapText(ctx, ETICHETTA.nome, w - 60);
         lines.forEach(function(line) {
-            ctx.fillText(line, textX, y);
-            y += 38;
+            ctx.fillText(line, centerX, y);
+            y += 34;
         });
 
         // Linea
-        y += 6;
+        y += 8;
         ctx.strokeStyle = '#ccc';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(textX, y);
-        ctx.lineTo(w - 30, y);
+        ctx.moveTo(40, y);
+        ctx.lineTo(w - 40, y);
         ctx.stroke();
-        y += 24;
+        y += 28;
 
-        // Dettagli
-        ctx.font = 'bold 22px sans-serif';
+        // Dettagli centrati
+        ctx.font = 'bold 20px sans-serif';
         ctx.fillStyle = '#475569';
-        ctx.fillText('Peso: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.peso, textX + ctx.measureText('Peso: ').width, y);
-
-        var cellaX = textX + 200;
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Cella: ', cellaX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.cella, cellaX + ctx.measureText('Cella: ').width, y);
-        y += 34;
-
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Operatore: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.operatore, textX + ctx.measureText('Operatore: ').width, y);
-        y += 34;
-
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Data: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.data, textX + ctx.measureText('Data: ').width, y);
+        ctx.fillText('Peso: ' + ETICHETTA.peso, centerX, y);
+        y += 30;
+        ctx.fillText('Cella: ' + ETICHETTA.cella, centerX, y);
+        y += 30;
+        ctx.fillText('Operatore: ' + ETICHETTA.operatore, centerX, y);
+        y += 30;
+        ctx.fillText('Data: ' + ETICHETTA.data, centerX, y);
 
         // Scarica/Condividi
         canvas.toBlob(function(blob) {
