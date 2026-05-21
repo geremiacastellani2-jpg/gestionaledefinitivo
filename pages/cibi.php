@@ -174,7 +174,7 @@ if ($azione === 'lista'):
 <div class="etichetta-preview" id="etichettaPreview">
     <div class="etichetta-card">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="90" height="90">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="80" height="80">
         </div>
         <div class="etichetta-info">
             <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
@@ -203,27 +203,31 @@ if ($azione === 'lista'):
         background: #fff;
         border: 2px solid #1e293b;
         border-radius: 8px;
-        padding: 0.8rem;
+        padding: 0.6rem 0.8rem;
         display: flex;
-        flex-direction: column;
+        gap: 0.7rem;
         align-items: center;
-        gap: 0.5rem;
-        max-width: 180px;
+        max-width: 280px;
         width: 100%;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .etichetta-qr { flex-shrink: 0; }
     .etichetta-qr img { border-radius: 4px; border: 1px solid #e2e8f0; }
-    .etichetta-info { text-align: center; width: 100%; }
+    .etichetta-info { flex: 1; }
     .etichetta-nome {
-        font-size: 0.8rem; font-weight: 800; color: #1e293b;
+        font-size: 0.85rem; font-weight: 800; color: #1e293b;
         margin-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;
     }
     .etichetta-dettagli {
-        display: flex; justify-content: center; gap: 0.4rem; font-size: 0.55rem; color: #475569; margin-bottom: 0.15rem;
+        display: flex; gap: 0.5rem; font-size: 0.6rem; color: #475569; margin-bottom: 0.15rem;
     }
     .etichetta-desc {
-        font-size: 0.5rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
+        font-size: 0.55rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+        .etichetta-card { flex-direction: column; text-align: center; }
+        .etichetta-dettagli { justify-content: center; }
     }
 
     @media print {
@@ -232,10 +236,11 @@ if ($azione === 'lista'):
         .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
         .etichetta-card {
             border: 2px solid #000; box-shadow: none;
-            flex-direction: column !important;
-            max-width: 180px;
+            flex-direction: row !important; text-align: left !important;
+            max-width: 280px;
             -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
+        .etichetta-dettagli { justify-content: flex-start !important; }
     }
 </style>
 
@@ -251,7 +256,7 @@ var ETICHETTA = {
 
 function scaricaImmagine() {
     var scale = 2;
-    var w = 400, h = 700;
+    var w = 800, h = 400;
     var canvas = document.getElementById('etichettaCanvas');
     canvas.width = w * scale;
     canvas.height = h * scale;
@@ -270,46 +275,67 @@ function scaricaImmagine() {
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.onload = function() {
-        // QR in alto centrato
-        var qrSize = 220;
-        var qrX = (w - qrSize) / 2;
-        var qrY = 30;
+        // QR a sinistra
+        var qrSize = 240;
+        var qrX = 40;
+        var qrY = (h - qrSize) / 2;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        // Info sotto
-        var y = qrY + qrSize + 30;
-        ctx.textAlign = 'center';
-        var centerX = w / 2;
+        // Info a destra
+        var textX = qrX + qrSize + 40;
+        var y = 60;
 
         // Nome
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 28px sans-serif';
-        var lines = wrapText(ctx, ETICHETTA.nome, w - 60);
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'left';
+        var lines = wrapText(ctx, ETICHETTA.nome, w - textX - 30);
         lines.forEach(function(line) {
-            ctx.fillText(line, centerX, y);
-            y += 34;
+            ctx.fillText(line, textX, y);
+            y += 38;
         });
 
         // Linea
-        y += 8;
+        y += 6;
         ctx.strokeStyle = '#ccc';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(40, y);
-        ctx.lineTo(w - 40, y);
+        ctx.moveTo(textX, y);
+        ctx.lineTo(w - 30, y);
         ctx.stroke();
-        y += 28;
+        y += 24;
 
-        // Dettagli centrati
-        ctx.font = 'bold 20px sans-serif';
+        // Dettagli
+        ctx.font = 'bold 22px sans-serif';
         ctx.fillStyle = '#475569';
-        ctx.fillText('Peso: ' + ETICHETTA.peso, centerX, y);
-        y += 30;
-        ctx.fillText('Cella: ' + ETICHETTA.cella, centerX, y);
-        y += 30;
-        ctx.fillText('Operatore: ' + ETICHETTA.operatore, centerX, y);
-        y += 30;
-        ctx.fillText('Data: ' + ETICHETTA.data, centerX, y);
+        ctx.fillText('Peso: ', textX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.peso, textX + ctx.measureText('Peso: ').width, y);
+
+        var cellaX = textX + 200;
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Cella: ', cellaX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.cella, cellaX + ctx.measureText('Cella: ').width, y);
+        y += 34;
+
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Operatore: ', textX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.operatore, textX + ctx.measureText('Operatore: ').width, y);
+        y += 34;
+
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.fillText('Data: ', textX, y);
+        ctx.fillStyle = '#000';
+        ctx.font = '22px sans-serif';
+        ctx.fillText(ETICHETTA.data, textX + ctx.measureText('Data: ').width, y);
 
         // Scarica/Condividi
         canvas.toBlob(function(blob) {
