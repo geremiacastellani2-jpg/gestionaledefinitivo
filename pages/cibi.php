@@ -174,21 +174,11 @@ if ($azione === 'lista'):
 <div class="etichetta-preview" id="etichettaPreview">
     <div class="etichetta-card">
         <div class="etichetta-qr">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="80" height="80">
+            <img src="<?= e($qrUrl) ?>" alt="QR Code" id="qrImg" crossorigin="anonymous" width="100" height="100">
         </div>
         <div class="etichetta-info">
             <div class="etichetta-nome"><?= e($cibo['nome']) ?></div>
-            <div class="etichetta-dettagli">
-                <span><strong>Peso:</strong> <?= e($cibo['peso']) ?></span>
-                <span><strong>Cella:</strong> <?= e($cibo['cella']) ?></span>
-            </div>
-            <div class="etichetta-dettagli">
-                <span><strong>Operatore:</strong> <?= e($cibo['operatore']) ?></span>
-                <span><strong>Data:</strong> <?= date('d/m/Y', strtotime($cibo['created_at'])) ?></span>
-            </div>
-            <?php if ($cibo['descrizione']): ?>
-                <div class="etichetta-desc"><?= e($cibo['descrizione']) ?></div>
-            <?php endif; ?>
+            <div class="etichetta-data"><?= date('d/m/Y', strtotime($cibo['created_at'])) ?></div>
         </div>
     </div>
 </div>
@@ -201,33 +191,27 @@ if ($azione === 'lista'):
     }
     .etichetta-card {
         background: #fff;
-        border: 2px solid #1e293b;
-        border-radius: 8px;
-        padding: 0.6rem 0.8rem;
+        border: none;
+        padding: 0.8rem 1rem;
         display: flex;
-        gap: 0.7rem;
+        gap: 1rem;
         align-items: center;
-        max-width: 280px;
+        max-width: 320px;
         width: 100%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .etichetta-qr { flex-shrink: 0; }
     .etichetta-qr img { border-radius: 4px; border: 1px solid #e2e8f0; }
-    .etichetta-info { flex: 1; }
+    .etichetta-info { flex: 1; text-align: center; }
     .etichetta-nome {
-        font-size: 0.85rem; font-weight: 800; color: #1e293b;
-        margin-bottom: 0.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;
+        font-size: 1.5rem; font-weight: 800; color: #000;
+        line-height: 1.1; margin-bottom: 0.3rem;
     }
-    .etichetta-dettagli {
-        display: flex; gap: 0.5rem; font-size: 0.6rem; color: #475569; margin-bottom: 0.15rem;
-    }
-    .etichetta-desc {
-        font-size: 0.55rem; color: #64748b; margin-top: 0.25rem; font-style: italic;
+    .etichetta-data {
+        font-size: 1.1rem; font-weight: 700; color: #1e293b;
     }
 
     @media (max-width: 600px) {
         .etichetta-card { flex-direction: column; text-align: center; }
-        .etichetta-dettagli { justify-content: center; }
     }
 
     @media print {
@@ -235,12 +219,11 @@ if ($azione === 'lista'):
         .etichetta-preview, .etichetta-preview * { visibility: visible; }
         .etichetta-preview { position: absolute; left: 0; top: 0; margin: 0; }
         .etichetta-card {
-            border: 2px solid #000; box-shadow: none;
+            border: none; box-shadow: none;
             flex-direction: row !important; text-align: left !important;
-            max-width: 280px;
+            max-width: 320px;
             -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
-        .etichetta-dettagli { justify-content: flex-start !important; }
     }
 </style>
 
@@ -267,75 +250,43 @@ function scaricaImmagine() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, w, h);
 
-    // Bordo
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(4, 4, w - 8, h - 8);
-
     var qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.onload = function() {
-        // QR a sinistra
-        var qrSize = 240;
-        var qrX = 40;
+        // QR a sinistra centrato verticalmente
+        var qrSize = 300;
+        var qrX = 30;
         var qrY = (h - qrSize) / 2;
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-        // Info a destra
-        var textX = qrX + qrSize + 40;
-        var y = 60;
+        // Info a destra centrate verticalmente
+        var textX = qrX + qrSize + 30;
+        var textAreaW = w - textX - 30;
+        var centerX = textX + textAreaW / 2;
+        ctx.textAlign = 'center';
 
-        // Nome
-        ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 32px sans-serif';
-        ctx.textAlign = 'left';
-        var lines = wrapText(ctx, ETICHETTA.nome, w - textX - 30);
-        lines.forEach(function(line) {
-            ctx.fillText(line, textX, y);
-            y += 38;
+        // Calcola altezza totale testo per centrare
+        ctx.font = 'bold 72px sans-serif';
+        var nomeLines = wrapText(ctx, ETICHETTA.nome, textAreaW);
+        var nomeHeight = nomeLines.length * 80;
+        var dataHeight = 50;
+        var totalH = nomeHeight + 30 + dataHeight;
+        var startY = (h - totalH) / 2 + 60;
+
+        // Nome grande
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 72px sans-serif';
+        var y = startY;
+        nomeLines.forEach(function(line) {
+            ctx.fillText(line, centerX, y);
+            y += 80;
         });
 
-        // Linea
-        y += 6;
-        ctx.strokeStyle = '#ccc';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(textX, y);
-        ctx.lineTo(w - 30, y);
-        ctx.stroke();
-        y += 24;
-
-        // Dettagli
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Peso: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.peso, textX + ctx.measureText('Peso: ').width, y);
-
-        var cellaX = textX + 200;
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Cella: ', cellaX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.cella, cellaX + ctx.measureText('Cella: ').width, y);
-        y += 34;
-
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Operatore: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.operatore, textX + ctx.measureText('Operatore: ').width, y);
-        y += 34;
-
-        ctx.font = 'bold 22px sans-serif';
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Data: ', textX, y);
-        ctx.fillStyle = '#000';
-        ctx.font = '22px sans-serif';
-        ctx.fillText(ETICHETTA.data, textX + ctx.measureText('Data: ').width, y);
+        // Data grande
+        y += 30;
+        ctx.font = 'bold 48px sans-serif';
+        ctx.fillStyle = '#1e293b';
+        ctx.fillText(ETICHETTA.data, centerX, y);
 
         // Scarica/Condividi
         canvas.toBlob(function(blob) {
